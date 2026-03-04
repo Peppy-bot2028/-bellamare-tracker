@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>Bellamare Development Tracker</title>
+
+<!-- PWA -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#7b0f1d">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+
+<!-- Styles -->
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ===== Header ===== -->
+  <header>
+    <div class="brand">
+      <img src="img/logo.png" alt="Bellamare" class="logo"/>
+      <div>
+        <h1>Bellamare Development Tracker</h1>
+        <div class="sub">Portfolio scan + weekly decision cadence &bull; Expand to edit</div>
+      </div>
+    </div>
+
+    <!-- Mobile filter toggle -->
+    <button class="filterToggle" onclick="toggleFilters()">Filters &amp; Controls &#9662;</button>
+
+    <div class="controls">
+      <div class="control">
+        <label>Search</label>
+        <input type="text" id="searchBox" placeholder="Name or location..." oninput="render()"/>
+      </div>
+      <div class="control">
+        <label>Review filter</label>
+        <select id="reviewFilter" onchange="render()">
+          <option value="all">All projects</option>
+          <option value="due14">Decision due in 14 days</option>
+          <option value="overdue">Overdue decisions</option>
+          <option value="cash">Cash needed</option>
+          <option value="holdkill">Hold + Kill</option>
+        </select>
+      </div>
+      <div class="control">
+        <label>View</label>
+        <select id="bucketView" onchange="render()">
+          <option value="pipeline">Pipeline</option>
+          <option value="construction">Construction</option>
+          <option value="archived">Archive</option>
+          <option value="all">All</option>
+        </select>
+      </div>
+      <div class="control">
+        <label>Sort by</label>
+        <select id="sortField" onchange="window.__suspendSort=false;render()">
+          <option value="score">Score</option>
+          <option value="decisionDate">Target Decision Date</option>
+          <option value="decision">Decision</option>
+          <option value="stage">Stage</option>
+          <option value="status">Status</option>
+          <option value="ownershipPct">Ownership %</option>
+          <option value="cashNeeded">Cash Needed</option>
+          <option value="name">Project Name</option>
+        </select>
+      </div>
+      <div class="control">
+        <label>Direction</label>
+        <select id="sortDir" onchange="window.__suspendSort=false;render()">
+          <option value="desc">Desc</option>
+          <option value="asc">Asc</option>
+        </select>
+      </div>
+      <div class="control">
+        <label>Sync</label>
+        <div class="syncStatus" id="syncStatus">
+          <span class="syncDot saved"></span> Saved
+        </div>
+      </div>
+      <div class="control" style="min-width:auto">
+        <label>&nbsp;</label>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button onclick="importFromFile()" title="Import projects from JSON file">Import JSON</button>
+          <button onclick="exportToJson(window._projects)" title="Export projects as JSON backup">Export JSON</button>
+          <button onclick="addProject()">+ Add project</button>
+          <button onclick="toggleLock()">&#128274; Lock / Unlock</button>
+          <button onclick="setAll(false)">Collapse all</button>
+          <button onclick="setAll(true)">Expand all</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===== KPI Strip ===== -->
+  <section class="kpis" id="kpis"></section>
+
+  <!-- ===== Project Cards ===== -->
+  <div class="cards" id="cards"></div>
+
+  <!-- ===== Footer ===== -->
+  <div class="footer">
+    Cloud-synced via Azure &bull; Install on your phone: tap Share &rarr; Add to Home Screen
+  </div>
+
+</div>
+
+<!-- ===== Mobile Bottom Bar ===== -->
+<div class="mobileBottomBar">
+  <button onclick="addProject()">+ Add Project</button>
+  <button onclick="toggleFilters()">Filters</button>
+  <div class="syncStatus" id="syncStatusMobile">
+    <span class="syncDot saved"></span> Saved
+  </div>
+</div>
+
+<!-- ===== Scripts ===== -->
+<script src="js/email.js"></script>
+<script src="js/db.js"></script>
+<script src="js/tasks.js"></script>
+<script src="js/app.js"></script>
+
+<!-- Service Worker Registration -->
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js').catch(function(e) {
+    console.log('SW registration failed:', e);
+  });
+}
+</script>
+</body>
+</html>

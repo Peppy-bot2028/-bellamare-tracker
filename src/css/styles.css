@@ -1,0 +1,293 @@
+/* ===== Bellamare Development Tracker — Styles ===== */
+
+:root {
+  --bg: #f6f4f2;
+  --bg2: #fbfaf8;
+  --card: #ffffff;
+  --wax: #7b0f1d;
+  --gold: #c9a24d;
+  --text: #1b1b1b;
+  --muted: #6b6b6b;
+  --border: #e3dfdb;
+  --green: #22c55e;
+  --blue: #2563eb;
+  --yellow: #eab308;
+  --red: #ef4444;
+  --radius: 16px;
+  --shadow: 0 10px 28px rgba(0,0,0,.08);
+  --font: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+}
+
+* { box-sizing: border-box }
+
+body {
+  margin: 0;
+  background: linear-gradient(180deg, var(--bg2), var(--bg));
+  color: var(--text);
+  font-family: var(--font);
+}
+
+.wrap { max-width: 1320px; margin: 0 auto; padding: 22px }
+
+/* ===== Header ===== */
+header {
+  display: flex; align-items: flex-end; justify-content: space-between;
+  gap: 14px; margin-bottom: 12px; flex-wrap: wrap;
+}
+.brand { display: flex; align-items: center; gap: 14px }
+.logo { width: 54px; height: 54px }
+h1 { margin: 0; font-size: 22px; letter-spacing: .4px }
+.sub { color: var(--muted); font-size: 12px; margin-top: 2px }
+
+.controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; justify-content: flex-end }
+.control { display: flex; flex-direction: column; gap: 4px; min-width: 150px }
+.control label { font-size: 10px; letter-spacing: .5px; text-transform: uppercase; color: var(--muted) }
+
+button, select, input[type="text"] {
+  background: #fff;
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 9px 10px;
+  font-size: 13px;
+}
+button {
+  border-color: rgba(201,162,77,.75);
+  cursor: pointer;
+  background: linear-gradient(180deg, #fff, #f7f2ea);
+}
+button:hover { background: #f3efe9 }
+button:active { transform: translateY(1px) }
+
+/* ===== KPI Strip ===== */
+.kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 10px;
+  margin: 12px 0 8px;
+}
+
+.kpi {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: 0 8px 20px rgba(0,0,0,.06);
+  padding: 12px 12px 10px;
+}
+.kpiLabel { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px }
+.kpiValue { margin-top: 6px; font-size: 18px; font-weight: 900 }
+.kpiSub { margin-top: 2px; font-size: 11px; color: var(--muted) }
+.kpiDot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 8px; vertical-align: middle }
+.dot-green { background: var(--green) }
+.dot-blue { background: var(--blue) }
+.dot-yellow { background: var(--yellow) }
+.dot-red { background: var(--red) }
+
+/* ===== Project Cards ===== */
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 14px; margin-top: 10px }
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 14px 14px 12px;
+  position: relative;
+}
+
+.titleRow { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px }
+.titleBlock { min-width: 0; flex: 1 }
+.title { font-weight: 800; font-size: 16px; margin-bottom: 2px; line-height: 1.2 }
+.meta { font-size: 12px; color: var(--muted) }
+
+.scorePill {
+  flex: 0 0 auto;
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 64px; height: 32px; padding: 0 12px;
+  border-radius: 999px; font-weight: 900; font-size: 14px;
+  color: #fff; box-shadow: 0 6px 14px rgba(0,0,0,.10);
+}
+.score-green { background: var(--green) }
+.score-blue { background: var(--blue) }
+.score-yellow { background: var(--yellow); color: #1b1b1b }
+.score-red { background: var(--red) }
+
+.badges { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0 8px }
+.badge {
+  font-size: 11px; padding: 5px 10px; border-radius: 999px;
+  border: 1px solid var(--border); background: #faf9f7;
+}
+.badge-wax { border-color: rgba(123,15,29,.35); color: var(--wax); background: rgba(123,15,29,.06) }
+.badge-gold { border-color: rgba(201,162,77,.45); color: #6d5416; background: rgba(201,162,77,.10) }
+.badge-cash { border-color: rgba(239,68,68,.40); color: #8b1a1a; background: rgba(239,68,68,.08) }
+.badge-nocash { border-color: rgba(34,197,94,.35); color: #14532d; background: rgba(34,197,94,.08) }
+.badge-decision { border-color: rgba(201,162,77,.55); color: #6d5416; background: rgba(201,162,77,.10) }
+.badge-overdue { border-color: rgba(239,68,68,.55); color: #8b1a1a; background: rgba(239,68,68,.10) }
+
+.minGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 12px; margin-top: 6px }
+.minItem { font-size: 12px }
+.minLabel { color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: .5px }
+.minValue { margin-top: 2px; font-weight: 650; font-size: 13px }
+
+.toggleRow { margin-top: 10px; display: flex; justify-content: flex-end; gap: 12px }
+.toggleLink { color: #6d5416; font-size: 12px; cursor: pointer; user-select: none }
+.toggleLink:hover { text-decoration: underline }
+
+.details { margin-top: 12px; border-top: 1px solid var(--border); padding-top: 12px; display: none }
+.card.expanded .details { display: block }
+
+.field { margin-bottom: 10px }
+.field .label { font-size: 10px; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); margin-bottom: 4px }
+
+select, input[type=range], input[type=text], input[type=number], input[type=date], input[type=email] {
+  width: 100%; padding: 9px 10px; border: 1px solid rgba(0,0,0,.12);
+  border-radius: 10px; font-size: 13px; background: #fff;
+}
+
+.threeCol { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px 12px }
+.twoCol { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 12px }
+
+.guidance {
+  margin-top: 6px; padding: 10px 12px; background: #faf9f7;
+  border: 1px dashed rgba(0,0,0,.12); border-radius: 10px; font-size: 12px;
+}
+.guidance ul { margin: 6px 0 0 16px; padding: 0 }
+.guidance li { margin-bottom: 3px }
+
+.scores { margin-top: 12px }
+.scoreRow { display: flex; align-items: center; gap: 10px; margin-bottom: 4px }
+.scoreRow span { width: 100px; font-size: 12px; color: var(--muted) }
+.scoreRow input[type=range] { flex: 1 }
+.scoreVal { width: 20px; text-align: center; font-weight: 700; font-size: 14px }
+
+.smallNote { margin-top: 12px; font-size: 11px; color: var(--muted); font-style: italic }
+
+.footer {
+  text-align: center; margin-top: 28px; padding: 18px;
+  font-size: 11px; color: var(--muted); border-top: 1px solid var(--border);
+}
+
+/* ===== Lock mode ===== */
+.locked .details input,
+.locked .details select,
+.locked .details textarea {
+  pointer-events: none;
+  background: #f7f4f0;
+  color: #3a3a3a;
+  opacity: 0.6;
+}
+
+/* ===== Email Button ===== */
+.emailBtn {
+  background: none; border: none; cursor: pointer; padding: 4px 6px;
+  font-size: 16px; color: var(--muted); border-radius: 8px;
+  transition: color .15s, background .15s;
+}
+.emailBtn:hover { color: var(--wax); background: rgba(123,15,29,.06) }
+.emailBtn:disabled { opacity: .3; cursor: default }
+.emailBtn:disabled:hover { color: var(--muted); background: none }
+
+/* ===== Task Panel ===== */
+.taskPanel { margin-top: 14px; border-top: 1px solid var(--border); padding-top: 12px }
+.taskHeader { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px }
+.taskHeader h3 { margin: 0; font-size: 13px; text-transform: uppercase; letter-spacing: .5px; color: var(--muted) }
+.taskList { list-style: none; padding: 0; margin: 0 }
+
+.taskItem {
+  display: flex; align-items: center; gap: 8px; padding: 8px 10px;
+  border: 1px solid var(--border); border-radius: 10px; margin-bottom: 6px;
+  background: #faf9f7; font-size: 13px;
+}
+.taskItem.completed { opacity: .55 }
+.taskItem.completed .taskTitle { text-decoration: line-through }
+.taskItem.overdue { border-color: rgba(239,68,68,.4) }
+
+.taskTitle { flex: 1; font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.taskAssignee { font-size: 11px; color: var(--muted); white-space: nowrap }
+.taskDue { font-size: 11px; color: var(--muted); white-space: nowrap }
+.taskDue.overdue { color: var(--red); font-weight: 700 }
+
+.taskStatusBadge {
+  font-size: 10px; padding: 3px 8px; border-radius: 999px; cursor: pointer;
+  font-weight: 700; text-transform: uppercase; letter-spacing: .3px; white-space: nowrap;
+  user-select: none; border: none;
+}
+.taskStatusBadge.pending { background: rgba(234,179,8,.15); color: #92400e }
+.taskStatusBadge.in_progress { background: rgba(37,99,235,.12); color: #1e40af }
+.taskStatusBadge.completed { background: rgba(34,197,94,.12); color: #14532d }
+
+.taskActions { display: flex; gap: 4px; align-items: center }
+
+/* Add Task Form */
+.addTaskForm {
+  margin-top: 8px; padding: 12px; border: 1px solid var(--border);
+  border-radius: 12px; background: #fff;
+}
+.addTaskForm .twoCol { margin-bottom: 8px }
+.addTaskForm .formActions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 10px }
+
+.btn-small {
+  padding: 6px 14px; font-size: 12px; border-radius: 10px; cursor: pointer;
+  border: 1px solid var(--border); background: #fff;
+}
+.btn-primary { border-color: var(--gold); background: linear-gradient(180deg, #fff, #f7f2ea); font-weight: 700 }
+.btn-danger { border-color: rgba(239,68,68,.4); color: #8b1a1a; background: rgba(239,68,68,.04) }
+.btn-email { border-color: rgba(37,99,235,.3); color: #1e40af; background: rgba(37,99,235,.04) }
+
+.deleteBtn {
+  background: none; border: none; cursor: pointer; padding: 2px 6px;
+  font-size: 14px; color: var(--muted); border-radius: 6px;
+}
+.deleteBtn:hover { color: var(--red); background: rgba(239,68,68,.06) }
+
+/* ===== Sync Status ===== */
+.syncStatus { font-size: 11px; color: var(--muted); display: flex; align-items: center; gap: 6px }
+.syncDot { width: 8px; height: 8px; border-radius: 50%; display: inline-block }
+.syncDot.saved { background: var(--green) }
+.syncDot.saving { background: var(--yellow); animation: pulse .8s infinite }
+.syncDot.offline { background: var(--red) }
+.syncDot.error { background: var(--red) }
+@keyframes pulse { 0%,100% { opacity: 1 } 50% { opacity: .4 } }
+
+/* ===== Mobile Filter Toggle ===== */
+.filterToggle {
+  display: none; padding: 8px 16px; font-size: 13px; font-weight: 600;
+  border: 1px solid var(--border); border-radius: 12px; cursor: pointer;
+  background: #fff; width: 100%;
+}
+.filtersCollapsed .controls { display: none }
+.filtersCollapsed .filterToggle { display: block }
+
+/* ===== Mobile Bottom Bar ===== */
+.mobileBottomBar {
+  display: none; position: fixed; bottom: 0; left: 0; right: 0;
+  background: #fff; border-top: 1px solid var(--border);
+  padding: 8px 16px; gap: 8px; z-index: 100;
+  box-shadow: 0 -4px 12px rgba(0,0,0,.08);
+  padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+}
+.mobileBottomBar button { flex: 1; min-height: 44px; font-size: 13px; font-weight: 600 }
+
+/* ===== Responsive ===== */
+@media (max-width: 1000px) {
+  .kpis { grid-template-columns: repeat(3, 1fr) }
+}
+@media (max-width: 720px) {
+  .threeCol { grid-template-columns: 1fr }
+  .filterToggle { display: block }
+  .mobileBottomBar { display: flex }
+  .wrap { padding-bottom: 70px }
+  header .controls { display: none }
+  header.filtersOpen .controls { display: flex; width: 100% }
+  button, select, input[type="text"], input[type="number"], input[type="date"], input[type="email"] {
+    min-height: 44px; font-size: 14px;
+  }
+  .taskItem { flex-wrap: wrap }
+  .taskTitle { width: 100%; white-space: normal }
+}
+@media (max-width: 560px) {
+  .kpis { grid-template-columns: repeat(2, 1fr) }
+  .cards { grid-template-columns: 1fr }
+  .twoCol { grid-template-columns: 1fr }
+  .minGrid { grid-template-columns: 1fr }
+}
