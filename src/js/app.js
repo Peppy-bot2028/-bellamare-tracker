@@ -399,36 +399,36 @@ function render() {
           '<div class="field"><div class="label">Project Name</div>' +
             '<input type="text" value="' + escText(p.name || "") + '" placeholder="Enter project name" ' +
               'oninput="window._projects[' + ri + '].name=this.value;window.__suspendSort=true;" ' +
-              'onchange="window._projects[' + ri + '].name=this.value;window.__suspendSort=true;debouncedSave(window._projects[' + ri + ']);render()"/></div>' +
+              'onchange="window._projects[' + ri + '].name=this.value;window.__suspendSort=true;debouncedSave(window._projects[' + ri + '])"/></div>' +
           '<div class="field"><div class="label">Internal Owner</div>' +
             '<input type="text" value="' + escText(p.internalOwner || "") + '" placeholder="Name" ' +
               'oninput="ownerInput(' + ri + ', this.value, this)" ' +
-              'onchange="setInternalOwner(' + ri + ', this.value);render()"/></div>' +
+              'onchange="setInternalOwner(' + ri + ', this.value)"/></div>' +
           '<div class="field"><div class="label">Owner Email</div>' +
             '<input data-field="internalOwnerEmail" type="email" value="' + escText(p.internalOwnerEmail || "") + '" placeholder="name@bellamare.com" ' +
-              'onchange="window._projects[' + ri + '].internalOwnerEmail=this.value;debouncedSave(window._projects[' + ri + ']);buildOwnerDirectory();render()"/></div>' +
+              'onchange="window._projects[' + ri + '].internalOwnerEmail=this.value;debouncedSave(window._projects[' + ri + ']);buildOwnerDirectory()"/></div>' +
           '<div class="field"><div class="label">Ownership %</div>' +
             '<input type="number" min="0" max="100" step="1" value="' + (p.ownershipPct != null ? p.ownershipPct : "") + '" ' +
-              'onchange="window._projects[' + ri + '].ownershipPct=(this.value===\'\'?\'\':+this.value);debouncedSave(window._projects[' + ri + ']);render()"/></div>' +
+              'onchange="window._projects[' + ri + '].ownershipPct=(this.value===\'\'?\'\':+this.value);debouncedSave(window._projects[' + ri + '])"/></div>' +
         '</div>' +
 
         '<div class="threeCol">' +
           '<div class="field"><div class="label">Decision</div>' +
-            '<select onchange="var v=(this.value||\'\').trim();window._projects[' + ri + '].decision=v;if(v===\'Kill\'){window._projects[' + ri + '].bucket=\'archived\';window._projects[' + ri + '].expanded=false;}debouncedSave(window._projects[' + ri + ']);render()">' +
+            '<select onchange="var v=(this.value||\'\').trim();window._projects[' + ri + '].decision=v;if(v===\'Kill\'){window._projects[' + ri + '].bucket=\'archived\';window._projects[' + ri + '].expanded=false;debouncedSave(window._projects[' + ri + ']);render();}else{debouncedSave(window._projects[' + ri + ']);}">' +
               decisions.map(function (d) { return '<option ' + (d === p.decision ? "selected" : "") + '>' + d + '</option>'; }).join("") +
             '</select></div>' +
           '<div class="field"><div class="label">Target Decision Date</div>' +
             '<input type="date" value="' + (p.targetDecisionDate || "") + '" ' +
-              'onchange="window._projects[' + ri + '].targetDecisionDate=this.value;window.__suspendSort=true;debouncedSave(window._projects[' + ri + ']);render()"/></div>' +
+              'onchange="window._projects[' + ri + '].targetDecisionDate=this.value;window.__suspendSort=true;debouncedSave(window._projects[' + ri + '])"/></div>' +
           '<div class="field"><div class="label">Cash Needed</div>' +
-            '<select onchange="window._projects[' + ri + '].cashNeeded=(this.value===\'Yes\');if(this.value===\'No\'){window._projects[' + ri + '].cashNeededAmount=\'\'}debouncedSave(window._projects[' + ri + ']);render()">' +
+            '<select onchange="window._projects[' + ri + '].cashNeeded=(this.value===\'Yes\');if(this.value===\'No\'){window._projects[' + ri + '].cashNeededAmount=\'\'}debouncedSave(window._projects[' + ri + '])">' +
               '<option ' + (p.cashNeeded ? "" : "selected") + '>No</option>' +
               '<option ' + (p.cashNeeded ? "selected" : "") + '>Yes</option>' +
             '</select></div>' +
         '</div>' +
 
         '<div class="field"><div class="label">Tracking Bucket</div>' +
-          '<select onchange="window._projects[' + ri + '].bucket=this.value;window.__suspendSort=true;debouncedSave(window._projects[' + ri + ']);render()">' +
+          '<select onchange="window._projects[' + ri + '].bucket=this.value;window.__suspendSort=true;debouncedSave(window._projects[' + ri + '])">' +
             '<option value="pipeline" ' + ((p.bucket || "pipeline") === "pipeline" ? "selected" : "") + '>Pipeline</option>' +
             '<option value="construction" ' + ((p.bucket || "pipeline") === "construction" ? "selected" : "") + '>Construction</option>' +
             '<option value="archived" ' + ((p.bucket || "pipeline") === "archived" ? "selected" : "") + '>Archive</option>' +
@@ -436,15 +436,15 @@ function render() {
 
         '<div class="field"><div class="label">Cash Needed Amount</div>' +
           '<input type="text" placeholder="$150k / $500k / etc." value="' + escText(p.cashNeededAmount || "") + '" ' +
-            'onchange="window._projects[' + ri + '].cashNeededAmount=this.value;debouncedSave(window._projects[' + ri + ']);render()"/></div>' +
+            'onchange="window._projects[' + ri + '].cashNeededAmount=this.value;debouncedSave(window._projects[' + ri + '])"/></div>' +
 
         '<div class="twoCol">' +
           '<div class="field"><div class="label">Stage</div>' +
-            '<select onchange="window._projects[' + ri + '].stage=this.selectedIndex;debouncedSave(window._projects[' + ri + ']);render()">' +
+            '<select onchange="window._projects[' + ri + '].stage=this.selectedIndex;debouncedSave(window._projects[' + ri + '])">' +
               stages.map(function (s, idx) { return '<option ' + (idx === p.stage ? "selected" : "") + '>' + s + '</option>'; }).join("") +
             '</select></div>' +
           '<div class="field"><div class="label">Status</div>' +
-            '<select onchange="window._projects[' + ri + '].status=this.value;debouncedSave(window._projects[' + ri + ']);render()">' +
+            '<select onchange="window._projects[' + ri + '].status=this.value;debouncedSave(window._projects[' + ri + '])">' +
               statuses.map(function (s) { return '<option ' + (s === p.status ? "selected" : "") + '>' + s + '</option>'; }).join("") +
             '</select></div>' +
         '</div>' +
@@ -455,12 +455,12 @@ function render() {
           '</select></div>' +
 
         '<div class="field"><div class="label">Next Gate</div>' +
-          '<select onchange="window._projects[' + ri + '].gate=this.value;debouncedSave(window._projects[' + ri + ']);render()">' +
+          '<select onchange="window._projects[' + ri + '].gate=this.value;debouncedSave(window._projects[' + ri + '])">' +
             gates.map(function (g) { return '<option ' + (g === p.gate ? "selected" : "") + '>' + g + '</option>'; }).join("") +
           '</select>' +
           (p.gate === "Other (specify)"
             ? '<input type="text" placeholder="Describe other gate..." value="' + escText(p.otherGate || "") + '" ' +
-                'onchange="window._projects[' + ri + '].otherGate=this.value;debouncedSave(window._projects[' + ri + ']);render()"/>'
+                'onchange="window._projects[' + ri + '].otherGate=this.value;debouncedSave(window._projects[' + ri + '])"/>'
             : "") +
           '<div class="guidance"><strong>' + escText(p.constraint) + ' \u2014 cleared when:</strong>' +
             '<ul>' + (gateLibrary[p.constraint] || []).map(function (g) { return '<li>' + escText(g) + '</li>'; }).join("") + '</ul></div>' +
