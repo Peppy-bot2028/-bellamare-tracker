@@ -367,6 +367,7 @@ function render() {
       '</div>' +
 
       '<div class="toggleRow">' +
+        '<span class="toggleLink deleteLink" onclick="removeProject(\'' + p.id + '\')" title="Delete project">\u00d7 Delete</span>' +
         (((p.bucket || "pipeline") === "pipeline" && ((p.stage || 0) >= 4 || (p.status || "") === "Under Construction"))
           ? '<span class="toggleLink" onclick="moveToConstruction(\'' + p.id + '\')">Move to Construction</span>' : '') +
         '<span class="toggleLink" onclick="toggle(' + ri + ')">' + (p.expanded ? "Collapse" : "Expand") + '</span>' +
@@ -537,6 +538,17 @@ async function addProject() {
     window._projects.unshift(newProj);
   }
   render();
+}
+
+async function removeProject(id) {
+  if (!confirm("Are you sure you want to delete this project? This cannot be undone.")) return;
+  var result = await deleteProject(id);
+  if (result) {
+    window._projects = window._projects.filter(function (p) { return p.id !== id; });
+    render();
+  } else {
+    alert("Failed to delete project.");
+  }
 }
 
 function moveToConstruction(id) {

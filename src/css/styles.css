@@ -132,6 +132,8 @@ button:active { transform: translateY(1px) }
 .toggleRow { margin-top: 10px; display: flex; justify-content: flex-end; gap: 12px }
 .toggleLink { color: #6d5416; font-size: 12px; cursor: pointer; user-select: none }
 .toggleLink:hover { text-decoration: underline }
+.deleteLink { color: var(--muted) }
+.deleteLink:hover { color: var(--red); text-decoration: underline }
 
 .details { margin-top: 12px; border-top: 1px solid var(--border); padding-top: 12px; display: none }
 .card.expanded .details { display: block }
