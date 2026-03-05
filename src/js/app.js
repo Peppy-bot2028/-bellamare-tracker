@@ -306,6 +306,9 @@ function render() {
   var cardsEl = document.getElementById("cards");
   if (!cardsEl) return;
 
+  // Save scroll position before re-render
+  var scrollY = window.scrollY || window.pageYOffset;
+
   var projects = window._projects;
   var base = filterProjects(projects);
   var filtered = applyReviewFilter(base);
@@ -470,6 +473,11 @@ function render() {
       '</div>';
 
     cardsEl.appendChild(card);
+  });
+
+  // Restore scroll position after re-render
+  requestAnimationFrame(function () {
+    window.scrollTo(0, scrollY);
   });
 }
 

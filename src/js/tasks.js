@@ -46,6 +46,10 @@ function renderTaskPanel(project, ri) {
     var statusLabel = { pending: "Pending", in_progress: "In Progress", completed: "Done" };
     var emailUrl = buildTaskMailto(project, t);
 
+    var completeBtn = t.status !== "completed"
+      ? '<button class="btn-small btn-complete" onclick="setTaskStatus(\'' + escAttr(projectId) + '\', \'' + escAttr(t.id) + '\', \'completed\')" title="Mark complete">\u2713 Complete</button>'
+      : '<button class="btn-small btn-reopen" onclick="setTaskStatus(\'' + escAttr(projectId) + '\', \'' + escAttr(t.id) + '\', \'pending\')" title="Reopen task">\u21a9 Reopen</button>';
+
     taskRows +=
       '<li class="taskItem ' + statusClass + (isOverdue ? " overdue" : "") + '">' +
         '<button class="taskStatusBadge ' + statusClass + '" ' +
@@ -59,6 +63,7 @@ function renderTaskPanel(project, ri) {
           (t.dueDate || "\u2014") +
         '</span>' +
         '<span class="taskActions">' +
+          completeBtn +
           '<button class="emailBtn" onclick="openEmail(buildTaskMailto(window._projects[' + ri + '], window._taskCache[\'' + escAttr(projectId) + '\'][' + i + ']))" ' +
             'title="Email assignee"' + (emailUrl ? "" : " disabled") + '>\u2709</button>' +
           '<button class="deleteBtn" onclick="removeTask(\'' + escAttr(projectId) + '\', \'' + escAttr(t.id) + '\')" title="Delete task">\u00d7</button>' +
@@ -195,6 +200,21 @@ async function saveAndEmailTask(projectId, ri) {
 async function cycleTaskStatus(projectId, taskId, currentStatus) {
   var nextStatus = { pending: "in_progress", in_progress: "completed", completed: "pending" };
   var newStatus = nextStatus[currentStatus] || "pending";
+  var updates = { status: newStatus };
+  if (newStatus === "completed") {
+    updates.completedAt = new Date().toISOString();
+  } else {
+    updates.completedAt = null;
+  }
+
+  var result = await updateTask(taskId, updates);
+  if (result) {
+    await loadProjectTasks(projectId);
+    render();
+  }
+}
+
+async function setTaskStatus(projectId, taskId, newStatus) {
   var updates = { status: newStatus };
   if (newStatus === "completed") {
     updates.completedAt = new Date().toISOString();
