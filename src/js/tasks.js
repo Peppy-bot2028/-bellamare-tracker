@@ -72,9 +72,9 @@ function renderTaskPanel(project, ri) {
   }
 
   var ownerOptions = "";
-  var owners = Object.keys(ownerEmailDirectory);
+  var owners = Object.keys(window._ownerDirectory || {});
   for (var j = 0; j < owners.length; j++) {
-    ownerOptions += '<option value="' + escAttr(owners[j]) + '">' + escText(owners[j]) + '</option>';
+    ownerOptions += '<option value="' + escAttr(owners[j]) + '">' + escText(owners[j]) + ' (' + escText(window._ownerDirectory[owners[j]]) + ')</option>';
   }
 
   return (

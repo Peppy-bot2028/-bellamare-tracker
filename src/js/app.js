@@ -167,6 +167,7 @@ function setInternalOwner(ri, name) {
   var email = ownerEmailLookup(v);
   if (email) window._projects[ri].internalOwnerEmail = email;
   debouncedSave(window._projects[ri]);
+  buildOwnerDirectory(); // Update directory so new person is available everywhere
 }
 
 /* ---------- Sort & Filter ---------- */
@@ -385,7 +386,7 @@ function render() {
               'onchange="setInternalOwner(' + ri + ', this.value);render()"/></div>' +
           '<div class="field"><div class="label">Owner Email</div>' +
             '<input data-field="internalOwnerEmail" type="email" value="' + escText(p.internalOwnerEmail || "") + '" placeholder="name@bellamare.com" ' +
-              'onchange="window._projects[' + ri + '].internalOwnerEmail=this.value;debouncedSave(window._projects[' + ri + ']);render()"/></div>' +
+              'onchange="window._projects[' + ri + '].internalOwnerEmail=this.value;debouncedSave(window._projects[' + ri + ']);buildOwnerDirectory();render()"/></div>' +
           '<div class="field"><div class="label">Ownership %</div>' +
             '<input type="number" min="0" max="100" step="1" value="' + (p.ownershipPct != null ? p.ownershipPct : "") + '" ' +
               'onchange="window._projects[' + ri + '].ownershipPct=(this.value===\'\'?\'\':+this.value);debouncedSave(window._projects[' + ri + ']);render()"/></div>' +
@@ -585,6 +586,7 @@ document.addEventListener("DOMContentLoaded", async function () {
       return p;
     });
     _ensureIds();
+    buildOwnerDirectory(); // Build team directory from all projects
   }
 
   setSyncStatus("saved");

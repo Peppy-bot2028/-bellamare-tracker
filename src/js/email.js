@@ -1,6 +1,7 @@
 /* ===== Email Module — Bellamare Tracker ===== */
 
-const ownerEmailDirectory = {
+// Base directory — always available
+const _baseOwnerDirectory = {
   "Paige": "paige@bellamaredevelopment.com",
   "Paul": "paul@bellamaredevelopment.com",
   "Deep": "deep@bellamaredevelopment.com",
@@ -9,17 +10,43 @@ const ownerEmailDirectory = {
   "Sunny": "sunny@bellamaredevelopment.com"
 };
 
+// Full directory — built from base + all projects. Used for dropdowns.
+window._ownerDirectory = Object.assign({}, _baseOwnerDirectory);
+
+// Rebuild the directory by scanning all loaded projects
+function buildOwnerDirectory() {
+  var dir = Object.assign({}, _baseOwnerDirectory);
+  for (var i = 0; i < (window._projects || []).length; i++) {
+    var p = window._projects[i];
+    var name = (p.internalOwner || "").trim();
+    var email = (p.internalOwnerEmail || "").trim();
+    if (name && email) {
+      // Use the first email found for each name (base directory takes priority)
+      var low = name.toLowerCase();
+      var exists = false;
+      for (var k in dir) {
+        if (k.toLowerCase() === low) { exists = true; break; }
+      }
+      if (!exists) dir[name] = email;
+    }
+  }
+  window._ownerDirectory = dir;
+}
+
+// Keep backward compatibility — tasks.js and app.js reference this
+var ownerEmailDirectory = window._ownerDirectory;
+
 function ownerEmailLookup(name) {
   const raw = (name || "").trim();
   if (!raw) return "";
   const low = raw.toLowerCase();
 
-  // 1) Hard directory (case-insensitive)
-  for (const k of Object.keys(ownerEmailDirectory)) {
-    if (k.toLowerCase() === low) return ownerEmailDirectory[k];
+  // 1) Full directory (case-insensitive)
+  for (const k of Object.keys(window._ownerDirectory || {})) {
+    if (k.toLowerCase() === low) return window._ownerDirectory[k];
   }
 
-  // 2) Look through loaded projects for a match
+  // 2) Look through loaded projects for a match (catches very recent edits)
   for (const p of (window._projects || [])) {
     const on = (p.internalOwner || "").trim();
     const em = (p.internalOwnerEmail || "").trim();
