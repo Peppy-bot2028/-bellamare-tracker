@@ -213,7 +213,7 @@ function filterProjects(list) {
   var q = normalize((document.getElementById("searchBox") || {}).value);
   if (!q) return list;
   return list.filter(function (p) {
-    return normalize(p.name).includes(q) || normalize(p.location).includes(q);
+    return normalize(p.name).includes(q) || normalize(p.location).includes(q) || normalize(p.internalOwner).includes(q);
   });
 }
 

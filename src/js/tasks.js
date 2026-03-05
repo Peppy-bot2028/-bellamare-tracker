@@ -3,6 +3,9 @@
 // Cache of loaded tasks keyed by projectId
 window._taskCache = {};
 
+// Track which projects have history expanded
+window._showHistory = {};
+
 // Load tasks for a project and cache them
 async function loadProjectTasks(projectId) {
   if (!projectId) return [];
@@ -38,15 +41,26 @@ function renderTaskPanel(project, ri) {
   var tasks = getCachedTasks(projectId);
   var now = todayISO();
 
-  var taskRows = "";
+  // Split tasks into active and completed
+  var activeTasks = [];
+  var completedTasks = [];
   for (var i = 0; i < tasks.length; i++) {
-    var t = tasks[i];
-    var isOverdue = t.status !== "completed" && t.dueDate && t.dueDate < now;
+    if (tasks[i].status === "completed") {
+      completedTasks.push({ task: tasks[i], idx: i });
+    } else {
+      activeTasks.push({ task: tasks[i], idx: i });
+    }
+  }
+
+  // Render active tasks
+  var taskRows = "";
+  for (var a = 0; a < activeTasks.length; a++) {
+    var t = activeTasks[a].task;
+    var idx = activeTasks[a].idx;
+    var isOverdue = t.dueDate && t.dueDate < now;
     var statusClass = (t.status || "pending").replace(/ /g, "_");
     var statusLabel = { pending: "Pending", in_progress: "In Progress" };
     var emailUrl = buildTaskMailto(project, t);
-
-    // No separate complete button — status cycles via the badge (Pending → In Progress)
 
     var notesHtml = t.notes
       ? '<div class="taskNotes">' + escText(t.notes) + '</div>'
@@ -66,8 +80,9 @@ function renderTaskPanel(project, ri) {
             (t.dueDate || "\u2014") +
           '</span>' +
           '<span class="taskActions">' +
+            '<button class="btn-small btn-done" onclick="markTaskDone(\'' + escAttr(projectId) + '\', \'' + escAttr(t.id) + '\')" title="Mark as done">\u2713 Done</button>' +
             '<button class="btn-small" onclick="toggleTaskNotes(\'' + escAttr(projectId) + '\', \'' + escAttr(t.id) + '\')" title="Edit notes">\u270e Notes</button>' +
-            '<button class="emailBtn" onclick="openEmail(buildTaskMailto(_findProject(\'' + escAttr(projectId) + '\'), window._taskCache[\'' + escAttr(projectId) + '\'][' + i + ']))" ' +
+            '<button class="emailBtn" onclick="openEmail(buildTaskMailto(_findProject(\'' + escAttr(projectId) + '\'), window._taskCache[\'' + escAttr(projectId) + '\'][' + idx + ']))" ' +
               'title="Email assignee"' + (emailUrl ? "" : " disabled") + '>\u2709</button>' +
             '<button class="deleteBtn" onclick="removeTask(\'' + escAttr(projectId) + '\', \'' + escAttr(t.id) + '\')" title="Delete task">\u00d7</button>' +
           '</span>' +
@@ -84,6 +99,37 @@ function renderTaskPanel(project, ri) {
       '</li>';
   }
 
+  // Render completed tasks (history)
+  var historyRows = "";
+  for (var c = 0; c < completedTasks.length; c++) {
+    var ct = completedTasks[c].task;
+    var completedDate = ct.completedAt ? ct.completedAt.substring(0, 10) : "\u2014";
+
+    historyRows +=
+      '<li class="taskItem taskDone">' +
+        '<div class="taskMainRow">' +
+          '<span class="taskDoneBadge">\u2713 Done</span>' +
+          '<span class="taskTitle taskTitleDone" title="' + escAttr(ct.title) + '">' + escText(ct.title) + '</span>' +
+          '<span class="taskAssignee">' + escText(ct.assignee || "") + '</span>' +
+          '<span class="taskDue">' + completedDate + '</span>' +
+          '<span class="taskActions">' +
+            '<button class="btn-small" onclick="reopenTask(\'' + escAttr(projectId) + '\', \'' + escAttr(ct.id) + '\')" title="Reopen task">\u21a9 Reopen</button>' +
+          '</span>' +
+        '</div>' +
+        (ct.notes ? '<div class="taskNotes">' + escText(ct.notes) + '</div>' : '') +
+      '</li>';
+  }
+
+  var showHistory = !!window._showHistory[projectId];
+  var historySection = completedTasks.length > 0
+    ? '<div class="taskHistoryToggle">' +
+        '<span class="toggleLink" onclick="toggleTaskHistory(\'' + escAttr(projectId) + '\')">' +
+          (showHistory ? '\u25bc' : '\u25b6') + ' Completed Tasks (' + completedTasks.length + ')' +
+        '</span>' +
+      '</div>' +
+      (showHistory ? '<ul class="taskList taskHistoryList">' + historyRows + '</ul>' : '')
+    : '';
+
   var ownerOptions = "";
   var owners = Object.keys(window._ownerDirectory || {});
   for (var j = 0; j < owners.length; j++) {
@@ -93,12 +139,13 @@ function renderTaskPanel(project, ri) {
   return (
     '<div class="taskPanel">' +
       '<div class="taskHeader">' +
-        '<h3>Action Items (' + tasks.length + ')</h3>' +
+        '<h3>Action Items (' + activeTasks.length + ')</h3>' +
         '<button class="btn-small btn-primary" onclick="showAddTaskForm(\'' + escAttr(projectId) + '\', ' + ri + ')">+ Add Task</button>' +
       '</div>' +
-      (tasks.length > 0
+      (activeTasks.length > 0
         ? '<ul class="taskList">' + taskRows + '</ul>'
-        : '<div style="font-size:12px;color:var(--muted);padding:8px 0">No tasks yet. Add one after your monthly meeting.</div>') +
+        : '<div style="font-size:12px;color:var(--muted);padding:8px 0">No active tasks. Add one after your monthly meeting.</div>') +
+      historySection +
       '<div id="addTaskForm-' + escAttr(projectId) + '" style="display:none">' +
         '<div class="addTaskForm">' +
           '<div class="field">' +
@@ -225,12 +272,7 @@ async function saveAndEmailTask(projectId, ri) {
 async function cycleTaskStatus(projectId, taskId, currentStatus) {
   var nextStatus = { pending: "in_progress", in_progress: "pending" };
   var newStatus = nextStatus[currentStatus] || "pending";
-  var updates = { status: newStatus };
-  if (newStatus === "completed") {
-    updates.completedAt = new Date().toISOString();
-  } else {
-    updates.completedAt = null;
-  }
+  var updates = { status: newStatus, completedAt: null };
 
   var result = await updateTask(taskId, updates);
   if (result) {
@@ -239,19 +281,27 @@ async function cycleTaskStatus(projectId, taskId, currentStatus) {
   }
 }
 
-async function setTaskStatus(projectId, taskId, newStatus) {
-  var updates = { status: newStatus };
-  if (newStatus === "completed") {
-    updates.completedAt = new Date().toISOString();
-  } else {
-    updates.completedAt = null;
-  }
-
+async function markTaskDone(projectId, taskId) {
+  var updates = { status: "completed", completedAt: new Date().toISOString() };
   var result = await updateTask(taskId, updates);
   if (result) {
     await loadProjectTasks(projectId);
     render();
   }
+}
+
+async function reopenTask(projectId, taskId) {
+  var updates = { status: "pending", completedAt: null };
+  var result = await updateTask(taskId, updates);
+  if (result) {
+    await loadProjectTasks(projectId);
+    render();
+  }
+}
+
+function toggleTaskHistory(projectId) {
+  window._showHistory[projectId] = !window._showHistory[projectId];
+  render();
 }
 
 async function removeTask(projectId, taskId) {

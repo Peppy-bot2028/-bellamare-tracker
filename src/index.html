@@ -34,7 +34,7 @@
     <div class="controls">
       <div class="control">
         <label>Search</label>
-        <input type="text" id="searchBox" placeholder="Name or location..." oninput="render()"/>
+        <input type="text" id="searchBox" placeholder="Name, location, or owner..." oninput="render()"/>
       </div>
       <div class="control">
         <label>Review filter</label>
@@ -85,8 +85,6 @@
       <div class="control" style="min-width:auto">
         <label>&nbsp;</label>
         <div style="display:flex;gap:6px;flex-wrap:wrap">
-          <button onclick="importFromFile()" title="Import projects from JSON file">Import JSON</button>
-          <button onclick="exportToJson(window._projects)" title="Export projects as JSON backup">Export JSON</button>
           <button onclick="addProject()">+ Add project</button>
           <button onclick="toggleLock()">&#128274; Lock / Unlock</button>
           <button onclick="setAll(false)">Collapse all</button>

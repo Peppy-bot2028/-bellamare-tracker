@@ -249,6 +249,18 @@ select, input[type=range], input[type=text], input[type=number], input[type=date
 .taskStatusBadge.in_progress { background: rgba(37,99,235,.12); color: #1e40af }
 
 .taskActions { display: flex; gap: 4px; align-items: center }
+.btn-done { border-color: rgba(34,197,94,.4); color: #14532d; background: rgba(34,197,94,.08); font-weight: 600 }
+.btn-done:hover { background: rgba(34,197,94,.18) }
+
+.taskDone { opacity: .55; background: #f5f4f2 }
+.taskTitleDone { text-decoration: line-through }
+.taskDoneBadge {
+  font-size: 10px; padding: 3px 8px; border-radius: 999px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .3px; white-space: nowrap;
+  background: rgba(34,197,94,.12); color: #14532d;
+}
+.taskHistoryToggle { margin-top: 10px; padding: 6px 0 }
+.taskHistoryList { margin-top: 6px }
 
 /* Add Task Form */
 .addTaskForm {
