@@ -64,7 +64,7 @@ function renderTaskPanel(project, ri) {
         '</span>' +
         '<span class="taskActions">' +
           completeBtn +
-          '<button class="emailBtn" onclick="openEmail(buildTaskMailto(window._projects[' + ri + '], window._taskCache[\'' + escAttr(projectId) + '\'][' + i + ']))" ' +
+          '<button class="emailBtn" onclick="openEmail(buildTaskMailto(_findProject(\'' + escAttr(projectId) + '\'), window._taskCache[\'' + escAttr(projectId) + '\'][' + i + ']))" ' +
             'title="Email assignee"' + (emailUrl ? "" : " disabled") + '>\u2709</button>' +
           '<button class="deleteBtn" onclick="removeTask(\'' + escAttr(projectId) + '\', \'' + escAttr(t.id) + '\')" title="Delete task">\u00d7</button>' +
         '</span>' +
@@ -125,6 +125,13 @@ function renderTaskPanel(project, ri) {
 
 function escAttr(s) {
   return String(s || "").replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+}
+
+function _findProject(id) {
+  for (var i = 0; i < (window._projects || []).length; i++) {
+    if (window._projects[i].id === id) return window._projects[i];
+  }
+  return null;
 }
 
 function showAddTaskForm(projectId) {
@@ -189,9 +196,11 @@ async function saveAndEmailTask(projectId, ri) {
 
   var result = await createTask(data);
   if (result) {
-    var project = window._projects[ri];
-    var mailto = buildTaskMailto(project, result);
-    openEmail(mailto);
+    var project = _findProject(projectId);
+    if (project) {
+      var mailto = buildTaskMailto(project, result);
+      openEmail(mailto);
+    }
     await loadProjectTasks(projectId);
     render();
   }
