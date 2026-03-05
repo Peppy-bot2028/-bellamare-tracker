@@ -118,6 +118,20 @@ function daysUntil(dateStr) {
 
 function normalize(str) { return (str || "").toLowerCase(); }
 
+// Update just the score pill on a card without full re-render
+function updateScorePill(pid, ri) {
+  var p = window._projects[ri];
+  if (!p) return;
+  var avg = avgScore(p.scores);
+  var card = document.querySelector('.card[data-pid="' + pid + '"]');
+  if (!card) return;
+  var pill = card.querySelector(".scorePill");
+  if (pill) {
+    pill.textContent = avg;
+    pill.className = "scorePill " + scoreClass(avg);
+  }
+}
+
 /* ---------- ID Generation ---------- */
 
 function _newId() {
@@ -470,8 +484,8 @@ function render() {
             return '<div class="scoreRow">' +
               '<span>' + k + '</span>' +
               '<input type="range" min="0" max="4" value="' + v + '" ' +
-                'oninput="window._projects[' + ri + '].scores[\'' + k + '\']=+this.value;window.__suspendSort=true;render();clearTimeout(window.__suspendSortTO);window.__suspendSortTO=setTimeout(function(){window.__suspendSort=false},250)" ' +
-                'onchange="window._projects[' + ri + '].scores[\'' + k + '\']=+this.value;window.__suspendSort=false;debouncedSave(window._projects[' + ri + ']);render()"/>' +
+                'oninput="window._projects[' + ri + '].scores[\'' + k + '\']=+this.value;this.nextElementSibling.textContent=this.value;updateScorePill(\'' + escAttr(p.id) + '\',' + ri + ')" ' +
+                'onchange="window._projects[' + ri + '].scores[\'' + k + '\']=+this.value;debouncedSave(window._projects[' + ri + ']);updateScorePill(\'' + escAttr(p.id) + '\',' + ri + ')"/>' +
               '<div class="scoreVal">' + v + '</div></div>';
           }).join("") +
         '</div>' +
@@ -513,15 +527,26 @@ function setAll(expand) {
 }
 
 function toggle(i) {
-  window._projects[i].expanded = !window._projects[i].expanded;
-
-  // Load tasks when expanding for the first time
   var p = window._projects[i];
+  p.expanded = !p.expanded;
+
+  // Find this card in the DOM and toggle directly — no full render
+  var card = document.querySelector('.card[data-pid="' + p.id + '"]');
+  if (card) {
+    if (p.expanded) {
+      card.classList.add("expanded");
+    } else {
+      card.classList.remove("expanded");
+    }
+    // Update the toggle link text
+    var link = card.querySelector(".toggleRow .toggleLink:last-child");
+    if (link) link.textContent = p.expanded ? "Collapse" : "Expand";
+  }
+
+  // Load tasks when expanding for the first time (needs a render to show task panel)
   if (p.expanded && p.id && !window._taskCache[p.id]) {
     loadProjectTasks(p.id).then(function () { render(); });
   }
-
-  render();
 }
 
 async function addProject() {
