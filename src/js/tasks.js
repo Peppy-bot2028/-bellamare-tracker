@@ -302,6 +302,7 @@ async function cycleTaskStatus(projectId, taskId, currentStatus) {
 }
 
 async function markTaskDone(projectId, taskId) {
+  if (!confirm("Mark this task as done?")) return;
   var updates = { status: "completed", completedAt: new Date().toISOString() };
   var result = await updateTask(taskId, updates);
   if (result) {
