@@ -61,7 +61,7 @@ module.exports = async function (context, req) {
       return;
     }
 
-    // --- PUT: Update ---
+    // --- PUT: Update (or create if new) ---
     if (method === "PUT") {
       if (!id) {
         context.res = { status: 400, headers, body: JSON.stringify({ error: "Project ID required" }) };
@@ -73,20 +73,23 @@ module.exports = async function (context, req) {
         return;
       }
 
-      // Read current doc to merge
-      const { resource: existing } = await projectsContainer.item(id, id).read();
-      if (!existing) {
-        context.res = { status: 404, headers, body: JSON.stringify({ error: "Not found" }) };
-        return;
+      // Try to read existing doc to merge; if not found, create new
+      let existing = null;
+      try {
+        const readResult = await projectsContainer.item(id, id).read();
+        existing = readResult.resource;
+      } catch (readErr) {
+        // Document doesn't exist yet — that's fine, we'll create it
       }
 
-      const updated = Object.assign({}, existing, body);
+      const updated = existing ? Object.assign({}, existing, body) : Object.assign({}, body);
       updated.id = id;
+      updated.createdAt = updated.createdAt || new Date().toISOString();
       updated.updatedAt = new Date().toISOString();
       // Remove UI-only fields
       delete updated.expanded;
 
-      const { resource: result } = await projectsContainer.item(id, id).replace(updated);
+      const { resource: result } = await projectsContainer.items.upsert(updated);
       context.res = { status: 200, headers, body: JSON.stringify({ project: result }) };
       return;
     }
