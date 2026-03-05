@@ -161,6 +161,7 @@ function renderTaskPanel(project, ri) {
                 '<option value="__other__">Other (type name)</option>' +
               '</select>' +
               '<input type="text" id="taskAssigneeOther-' + escAttr(projectId) + '" placeholder="Enter name" style="display:none;margin-top:6px" />' +
+              '<input type="email" id="taskAssigneeEmail-' + escAttr(projectId) + '" placeholder="Enter email" style="display:none;margin-top:6px" />' +
             '</div>' +
             '<div class="field">' +
               '<div class="label">Due Date</div>' +
@@ -198,12 +199,15 @@ function showAddTaskForm(projectId) {
   var form = document.getElementById("addTaskForm-" + projectId);
   if (form) form.style.display = "block";
 
-  // Wire up the "Other" option for assignee
+  // Wire up the "Other" option for assignee — show name + email fields
   var sel = document.getElementById("taskAssignee-" + projectId);
   var other = document.getElementById("taskAssigneeOther-" + projectId);
+  var emailField = document.getElementById("taskAssigneeEmail-" + projectId);
   if (sel && other) {
     sel.onchange = function () {
-      other.style.display = (sel.value === "__other__") ? "block" : "none";
+      var isOther = sel.value === "__other__";
+      other.style.display = isOther ? "block" : "none";
+      if (emailField) emailField.style.display = isOther ? "block" : "none";
     };
   }
 }
@@ -217,6 +221,7 @@ function _getTaskFormData(projectId) {
   var title = (document.getElementById("taskTitle-" + projectId) || {}).value || "";
   var assigneeSel = (document.getElementById("taskAssignee-" + projectId) || {}).value || "";
   var assigneeOther = (document.getElementById("taskAssigneeOther-" + projectId) || {}).value || "";
+  var assigneeEmailOther = (document.getElementById("taskAssigneeEmail-" + projectId) || {}).value || "";
   var assignee = (assigneeSel === "__other__") ? assigneeOther : assigneeSel;
   var dueDate = (document.getElementById("taskDue-" + projectId) || {}).value || "";
   var notes = (document.getElementById("taskNotes-" + projectId) || {}).value || "";
@@ -226,11 +231,24 @@ function _getTaskFormData(projectId) {
     return null;
   }
 
+  // Resolve email: use manually entered email for "Other", otherwise look up from directory
+  var email = "";
+  if (assigneeSel === "__other__" && assigneeEmailOther.trim()) {
+    email = assigneeEmailOther.trim();
+    // Add this new person to the owner directory so they appear in future dropdowns
+    var newName = assignee.trim();
+    if (newName && email) {
+      window._ownerDirectory[newName] = email;
+    }
+  } else {
+    email = ownerEmailLookup(assignee.trim());
+  }
+
   return {
     projectId: projectId,
     title: title.trim(),
     assignee: assignee.trim(),
-    assigneeEmail: ownerEmailLookup(assignee.trim()),
+    assigneeEmail: email,
     dueDate: dueDate,
     status: "pending",
     notes: notes.trim(),
@@ -246,6 +264,7 @@ async function saveNewTask(projectId, ri) {
   var result = await createTask(data);
   if (result) {
     await loadProjectTasks(projectId);
+    buildOwnerDirectory(); // Pick up any new name+email from this task
     render();
   }
 }
@@ -265,6 +284,7 @@ async function saveAndEmailTask(projectId, ri) {
   var result = await createTask(data);
   if (result) {
     await loadProjectTasks(projectId);
+    buildOwnerDirectory(); // Pick up any new name+email from this task
     render();
   }
 }

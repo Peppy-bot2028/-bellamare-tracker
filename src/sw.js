@@ -1,6 +1,6 @@
 /* ===== Bellamare Tracker — Service Worker ===== */
 
-var CACHE_NAME = 'bm-tracker-v10';
+var CACHE_NAME = 'bm-tracker-v11';
 var SHELL_ASSETS = [
   '/',
   '/index.html',

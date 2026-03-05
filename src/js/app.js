@@ -73,7 +73,7 @@ window._projects = [];
 window.__suspendSort = false;
 let _locked = false;
 const LOCK_CODE = "BELLAMARE";
-const DELETE_PIN = "1234";
+const DELETE_PIN = "1103";
 let nextIdCounter = 1;
 
 /* ---------- Utility Functions ---------- */

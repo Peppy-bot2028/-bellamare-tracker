@@ -13,15 +13,16 @@ const _baseOwnerDirectory = {
 // Full directory — built from base + all projects. Used for dropdowns.
 window._ownerDirectory = Object.assign({}, _baseOwnerDirectory);
 
-// Rebuild the directory by scanning all loaded projects
+// Rebuild the directory by scanning all loaded projects AND tasks
 function buildOwnerDirectory() {
   var dir = Object.assign({}, _baseOwnerDirectory);
+
+  // Scan projects for owner name+email
   for (var i = 0; i < (window._projects || []).length; i++) {
     var p = window._projects[i];
     var name = (p.internalOwner || "").trim();
     var email = (p.internalOwnerEmail || "").trim();
     if (name && email) {
-      // Use the first email found for each name (base directory takes priority)
       var low = name.toLowerCase();
       var exists = false;
       for (var k in dir) {
@@ -30,6 +31,24 @@ function buildOwnerDirectory() {
       if (!exists) dir[name] = email;
     }
   }
+
+  // Scan task cache for assignee name+email (picks up people added via tasks)
+  for (var pid in (window._taskCache || {})) {
+    var tasks = window._taskCache[pid];
+    for (var t = 0; t < tasks.length; t++) {
+      var tName = (tasks[t].assignee || "").trim();
+      var tEmail = (tasks[t].assigneeEmail || "").trim();
+      if (tName && tEmail) {
+        var tLow = tName.toLowerCase();
+        var tExists = false;
+        for (var k2 in dir) {
+          if (k2.toLowerCase() === tLow) { tExists = true; break; }
+        }
+        if (!tExists) dir[tName] = tEmail;
+      }
+    }
+  }
+
   window._ownerDirectory = dir;
 }
 
