@@ -123,11 +123,11 @@ function renderTaskPanel(project, ri) {
   var showHistory = !!window._showHistory[projectId];
   var historySection = completedTasks.length > 0
     ? '<div class="taskHistoryToggle">' +
-        '<span class="toggleLink" onclick="toggleTaskHistory(\'' + escAttr(projectId) + '\')">' +
+        '<span class="toggleLink" id="historyToggle-' + escAttr(projectId) + '" onclick="toggleTaskHistory(\'' + escAttr(projectId) + '\')">' +
           (showHistory ? '\u25bc' : '\u25b6') + ' Completed Tasks (' + completedTasks.length + ')' +
         '</span>' +
       '</div>' +
-      (showHistory ? '<ul class="taskList taskHistoryList">' + historyRows + '</ul>' : '')
+      '<ul class="taskList taskHistoryList" id="historyList-' + escAttr(projectId) + '" style="display:' + (showHistory ? 'block' : 'none') + '">' + historyRows + '</ul>'
     : '';
 
   var ownerOptions = "";
@@ -322,7 +322,17 @@ async function reopenTask(projectId, taskId) {
 
 function toggleTaskHistory(projectId) {
   window._showHistory[projectId] = !window._showHistory[projectId];
-  render();
+  var show = !!window._showHistory[projectId];
+
+  // Toggle the list visibility directly — no full render
+  var list = document.getElementById("historyList-" + projectId);
+  if (list) list.style.display = show ? "block" : "none";
+
+  // Flip the arrow on the toggle link
+  var toggle = document.getElementById("historyToggle-" + projectId);
+  if (toggle) {
+    toggle.innerHTML = toggle.innerHTML.replace(/[\u25b6\u25bc]/, show ? "\u25bc" : "\u25b6");
+  }
 }
 
 async function removeTask(projectId, taskId) {
