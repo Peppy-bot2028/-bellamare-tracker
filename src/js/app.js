@@ -602,6 +602,97 @@ function toggleFilters() {
   if (header) header.classList.toggle("filtersOpen");
 }
 
+/* ---------- Task Reminders ---------- */
+
+function showTaskReminders() {
+  var panel = document.getElementById("reminderPanel");
+  if (!panel) return;
+
+  var now = todayISO();
+  var soon = new Date();
+  soon.setDate(soon.getDate() + 3);
+  var soonISO = soon.getFullYear() + "-" + String(soon.getMonth() + 1).padStart(2, "0") + "-" + String(soon.getDate()).padStart(2, "0");
+
+  var reminders = [];
+
+  for (var pid in window._taskCache) {
+    var tasks = window._taskCache[pid];
+    var project = _findProject(pid);
+    if (!project) continue;
+
+    for (var i = 0; i < tasks.length; i++) {
+      var t = tasks[i];
+      if (t.status === "completed") continue;
+      if (!t.dueDate) continue;
+
+      var isOverdue = t.dueDate < now;
+      var isDueSoon = !isOverdue && t.dueDate <= soonISO;
+
+      if (isOverdue || isDueSoon) {
+        reminders.push({
+          task: t,
+          project: project,
+          isOverdue: isOverdue,
+          daysUntilDue: daysUntil(t.dueDate)
+        });
+      }
+    }
+  }
+
+  if (reminders.length === 0) {
+    panel.style.display = "none";
+    return;
+  }
+
+  // Sort: overdue first, then by due date
+  reminders.sort(function (a, b) {
+    if (a.isOverdue && !b.isOverdue) return -1;
+    if (!a.isOverdue && b.isOverdue) return 1;
+    return (a.task.dueDate || "").localeCompare(b.task.dueDate || "");
+  });
+
+  var rows = "";
+  for (var r = 0; r < reminders.length; r++) {
+    var rem = reminders[r];
+    var urgency = rem.isOverdue
+      ? '<span class="reminderBadge reminderOverdue">Overdue ' + Math.abs(rem.daysUntilDue) + 'd</span>'
+      : '<span class="reminderBadge reminderSoon">Due in ' + rem.daysUntilDue + 'd</span>';
+
+    var reminderMailto = buildReminderMailto(rem.project, rem.task);
+    var sendBtn = reminderMailto
+      ? '<button class="btn-small btn-email" onclick="openEmail(buildReminderMailto(_findProject(\'' + escText(rem.project.id) + '\'), window._taskCache[\'' + escText(rem.project.id) + '\'][' + (function () {
+          var tasks = window._taskCache[rem.project.id] || [];
+          for (var idx = 0; idx < tasks.length; idx++) { if (tasks[idx].id === rem.task.id) return idx; }
+          return 0;
+        })() + ']))">Send Reminder</button>'
+      : '';
+
+    rows +=
+      '<div class="reminderRow">' +
+        urgency +
+        '<div class="reminderInfo">' +
+          '<div class="reminderTask">' + escText(rem.task.title) + '</div>' +
+          '<div class="reminderMeta">' + escText(rem.project.name) + ' \u2022 ' + escText(rem.task.assignee || "Unassigned") + ' \u2022 Due: ' + rem.task.dueDate + '</div>' +
+        '</div>' +
+        sendBtn +
+      '</div>';
+  }
+
+  panel.innerHTML =
+    '<div class="reminderHeader">' +
+      '<h3>\u23f0 Task Reminders (' + reminders.length + ')</h3>' +
+      '<button class="btn-small" onclick="dismissReminders()">Dismiss</button>' +
+    '</div>' +
+    rows;
+
+  panel.style.display = "block";
+}
+
+function dismissReminders() {
+  var panel = document.getElementById("reminderPanel");
+  if (panel) panel.style.display = "none";
+}
+
 /* ---------- App Initialization ---------- */
 
 document.addEventListener("DOMContentLoaded", async function () {
@@ -627,4 +718,5 @@ document.addEventListener("DOMContentLoaded", async function () {
   });
   await Promise.all(taskPromises);
   render(); // Re-render with task counts
+  showTaskReminders(); // Show overdue / due-soon task reminders
 });

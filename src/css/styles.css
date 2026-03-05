@@ -59,6 +59,34 @@ button {
 button:hover { background: #f3efe9 }
 button:active { transform: translateY(1px) }
 
+/* ===== Task Reminders ===== */
+.reminderPanel {
+  background: #fff; border: 1px solid rgba(239,68,68,.25); border-left: 4px solid var(--red);
+  border-radius: var(--radius); box-shadow: var(--shadow);
+  padding: 14px 16px; margin-bottom: 12px;
+}
+.reminderHeader { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px }
+.reminderHeader h3 { margin: 0; font-size: 14px; color: var(--text) }
+.reminderRow {
+  display: flex; align-items: center; gap: 10px; padding: 8px 10px;
+  border: 1px solid var(--border); border-radius: 10px; margin-bottom: 6px;
+  background: #faf9f7;
+}
+.reminderInfo { flex: 1; min-width: 0 }
+.reminderTask { font-weight: 600; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+.reminderMeta { font-size: 11px; color: var(--muted); margin-top: 2px }
+.reminderBadge {
+  font-size: 10px; padding: 3px 8px; border-radius: 999px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .3px; white-space: nowrap; flex-shrink: 0;
+}
+.reminderOverdue { background: rgba(239,68,68,.12); color: #8b1a1a }
+.reminderSoon { background: rgba(234,179,8,.15); color: #92400e }
+
+@media (max-width: 720px) {
+  .reminderRow { flex-wrap: wrap }
+  .reminderTask { white-space: normal }
+}
+
 /* ===== KPI Strip ===== */
 .kpis {
   display: grid;

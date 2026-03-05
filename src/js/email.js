@@ -94,6 +94,31 @@ function buildTaskMailto(project, task) {
   return "mailto:" + email + "?subject=" + subject + "&body=" + body;
 }
 
+function buildReminderMailto(project, task) {
+  const email = task.assigneeEmail || ownerEmailLookup(task.assignee);
+  if (!email) return null;
+
+  var dueText = task.dueDate || "No date set";
+  var now = new Date();
+  var todayStr = now.getFullYear() + "-" + String(now.getMonth() + 1).padStart(2, "0") + "-" + String(now.getDate()).padStart(2, "0");
+  var isOverdue = task.dueDate && task.dueDate < todayStr;
+
+  const subject = encodeURIComponent(
+    (isOverdue ? "REMINDER: " : "Upcoming: ") + project.name + " \u2013 " + task.title
+  );
+  const body = encodeURIComponent(
+    "Hi " + (task.assignee || "there") + ",\n\n" +
+    "This is a " + (isOverdue ? "reminder that the following task is overdue" : "heads-up that the following task is due soon") + ":\n\n" +
+    "Project: " + project.name + " (" + (project.id || "") + ")\n" +
+    "Task: " + task.title + "\n" +
+    "Due: " + dueText + (isOverdue ? " (OVERDUE)" : "") + "\n" +
+    (task.notes ? "Notes: " + task.notes + "\n" : "") +
+    "\nPlease update the tracker when complete.\n\n" +
+    "\u2014 Bellamare Development Tracker"
+  );
+  return "mailto:" + email + "?subject=" + subject + "&body=" + body;
+}
+
 function openEmail(url) {
   if (!url) {
     alert("No email address on file for this owner.");
