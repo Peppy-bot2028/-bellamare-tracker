@@ -7,10 +7,12 @@ let _syncState = "saved"; // saved | saving | error | offline
 
 function setSyncStatus(state) {
   _syncState = state;
-  const el = document.getElementById("syncStatus");
-  if (!el) return;
   const labels = { saved: "Saved", saving: "Saving\u2026", error: "Save failed", offline: "Offline" };
-  el.innerHTML = '<span class="syncDot ' + state + '"></span> ' + (labels[state] || state);
+  const html = '<span class="syncDot ' + state + '"></span> ' + (labels[state] || state);
+  var el = document.getElementById("syncStatus");
+  if (el) el.innerHTML = html;
+  var el2 = document.getElementById("syncStatusMobile");
+  if (el2) el2.innerHTML = html;
 }
 
 /* ---------- Projects ---------- */
@@ -52,12 +54,17 @@ async function saveProject(project) {
 
 async function deleteProject(id) {
   try {
-    const res = await fetch(API_BASE + "/projects/" + id, { method: "DELETE" });
-    if (!res.ok) throw new Error("HTTP " + res.status);
+    const res = await fetch(API_BASE + "/projects/" + encodeURIComponent(id), { method: "DELETE" });
+    if (!res.ok) {
+      var errBody = "";
+      try { errBody = await res.text(); } catch (_) {}
+      console.error("deleteProject HTTP " + res.status + ":", errBody);
+      throw new Error("HTTP " + res.status + " — " + errBody);
+    }
     return true;
   } catch (e) {
     console.error("deleteProject failed:", e);
-    return false;
+    return e.message || "Unknown error";
   }
 }
 
@@ -90,6 +97,86 @@ function debouncedSave(project, delayMs) {
   _saveTimers[project.id] = setTimeout(function () {
     saveProject(project);
   }, delay);
+}
+
+/* ---------- Multi-User Auto-Refresh ---------- */
+let _refreshInterval = null;
+let _lastRefresh = 0;
+
+function startAutoRefresh(intervalMs) {
+  var interval = intervalMs || 30000; // 30 seconds default
+  stopAutoRefresh();
+  _refreshInterval = setInterval(function () {
+    // Don't refresh if user is actively editing a field
+    if (_isEditing()) return;
+    // Don't refresh if a save is in progress
+    if (_syncState === "saving") return;
+    silentRefresh();
+  }, interval);
+}
+
+function stopAutoRefresh() {
+  if (_refreshInterval) {
+    clearInterval(_refreshInterval);
+    _refreshInterval = null;
+  }
+}
+
+async function silentRefresh() {
+  try {
+    var res = await fetch(API_BASE + "/projects");
+    if (!res.ok) return;
+    var data = await res.json();
+    var serverProjects = data.projects || [];
+    if (serverProjects.length === 0) return;
+
+    // Build lookup of current expanded state
+    var expandedIds = {};
+    window._projects.forEach(function (p) { if (p.expanded) expandedIds[p.id] = true; });
+
+    // Merge: update existing projects with server data, add new ones, remove deleted ones
+    var serverIds = {};
+    var merged = [];
+    for (var i = 0; i < serverProjects.length; i++) {
+      var sp = serverProjects[i];
+      serverIds[sp.id] = true;
+      // Preserve expanded state from local
+      sp.expanded = !!expandedIds[sp.id];
+      merged.push(sp);
+    }
+
+    // Check if anything actually changed (compare count + updatedAt timestamps)
+    var changed = false;
+    if (merged.length !== window._projects.length) {
+      changed = true;
+    } else {
+      for (var j = 0; j < merged.length; j++) {
+        var local = window._projects.find(function (p) { return p.id === merged[j].id; });
+        if (!local || local.updatedAt !== merged[j].updatedAt) {
+          changed = true;
+          break;
+        }
+      }
+    }
+
+    if (changed) {
+      window._projects = merged;
+      _ensureIds();
+      buildOwnerDirectory();
+
+      // Reload tasks for any new/changed projects
+      var taskPromises = window._projects.map(function (p) {
+        return loadProjectTasks(p.id);
+      });
+      await Promise.all(taskPromises);
+
+      render();
+      _lastRefresh = Date.now();
+    }
+  } catch (e) {
+    // Silent fail — will retry next interval
+    console.log("Auto-refresh failed:", e.message);
+  }
 }
 
 /* ---------- Tasks ---------- */

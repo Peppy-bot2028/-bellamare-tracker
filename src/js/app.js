@@ -560,11 +560,11 @@ async function addProject() {
 async function removeProject(id) {
   if (!confirm("Are you sure you want to delete this project? This cannot be undone.")) return;
   var result = await deleteProject(id);
-  if (result) {
+  if (result === true) {
     window._projects = window._projects.filter(function (p) { return p.id !== id; });
     render();
   } else {
-    alert("Failed to delete project.");
+    alert("Failed to delete project: " + (result || "Unknown error"));
   }
 }
 
@@ -719,4 +719,7 @@ document.addEventListener("DOMContentLoaded", async function () {
   await Promise.all(taskPromises);
   render(); // Re-render with task counts
   showTaskReminders(); // Show overdue / due-soon task reminders
+
+  // Start auto-refresh for multi-user sync (every 30 seconds)
+  startAutoRefresh(30000);
 });
