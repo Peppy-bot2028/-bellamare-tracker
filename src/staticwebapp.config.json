@@ -4,8 +4,16 @@
     "exclude": ["/css/*", "/js/*", "/img/*", "/icons/*", "/*.json", "/sw.js"]
   },
   "globalHeaders": {
-    "Cache-Control": "public, max-age=3600"
+    "Cache-Control": "public, max-age=300"
   },
+  "routes": [
+    {
+      "route": "/sw.js",
+      "headers": {
+        "Cache-Control": "no-cache"
+      }
+    }
+  ],
   "mimeTypes": {
     ".json": "application/json",
     ".js": "application/javascript",

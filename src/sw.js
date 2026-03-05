@@ -1,6 +1,6 @@
 /* ===== Bellamare Tracker — Service Worker ===== */
 
-var CACHE_NAME = 'bm-tracker-v5';
+var CACHE_NAME = 'bm-tracker-v6';
 var SHELL_ASSETS = [
   '/',
   '/index.html',
@@ -15,7 +15,7 @@ var SHELL_ASSETS = [
   '/manifest.json'
 ];
 
-// Install: pre-cache app shell
+// Install: pre-cache app shell, activate immediately
 self.addEventListener('install', function (event) {
   event.waitUntil(
     caches.open(CACHE_NAME)
@@ -24,7 +24,7 @@ self.addEventListener('install', function (event) {
   );
 });
 
-// Activate: clean old caches
+// Activate: clean ALL old caches, take control immediately
 self.addEventListener('activate', function (event) {
   event.waitUntil(
     caches.keys().then(function (keys) {
@@ -36,24 +36,24 @@ self.addEventListener('activate', function (event) {
   );
 });
 
-// Fetch: cache-first for shell, network-first for API
+// Fetch: NETWORK-FIRST for everything (cloud app — always get latest)
 self.addEventListener('fetch', function (event) {
-  var url = event.request.url;
+  // Only handle GET requests — let DELETE/PUT/POST pass through untouched
+  if (event.request.method !== 'GET') return;
 
-  // Network-first for API calls
-  if (url.includes('/api/')) {
-    event.respondWith(
-      fetch(event.request).catch(function () {
-        return caches.match(event.request);
-      })
-    );
-    return;
-  }
-
-  // Cache-first for app shell
   event.respondWith(
-    caches.match(event.request).then(function (cached) {
-      return cached || fetch(event.request);
+    fetch(event.request).then(function (response) {
+      // Cache the fresh response for offline fallback
+      if (response.ok) {
+        var clone = response.clone();
+        caches.open(CACHE_NAME).then(function (cache) {
+          cache.put(event.request, clone);
+        });
+      }
+      return response;
+    }).catch(function () {
+      // Network failed — try cache as fallback
+      return caches.match(event.request);
     })
   );
 });
