@@ -62,7 +62,7 @@ const stages = [
 
 const statuses = [
   "Due Diligence", "Design \u2013 Schematic", "Pre-Development",
-  "Under Construction", "Negotiations", "Fee-based / 3rd Party", "Blank / Unclear"
+  "Under Construction", "Negotiations", "Fee-based / 3rd Party", "Completed", "Blank / Unclear"
 ];
 
 const decisions = ["Not set", "Advance", "Hold", "Kill"];
