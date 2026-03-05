@@ -99,11 +99,6 @@ function openEmail(url) {
     alert("No email address on file for this owner.");
     return;
   }
-  // Use a temporary link click instead of window.open — works with mailto: on all browsers
-  var a = document.createElement("a");
-  a.href = url;
-  a.style.display = "none";
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
+  // Use window.location.href for mailto: — works on both mobile and desktop
+  window.location.href = url;
 }

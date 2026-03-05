@@ -58,6 +58,8 @@
       <div class="control">
         <label>Sort by</label>
         <select id="sortField" onchange="window.__suspendSort=false;render()">
+          <option value="name" selected>Project Name</option>
+          <option value="owner">Project Owner</option>
           <option value="score">Score</option>
           <option value="decisionDate">Target Decision Date</option>
           <option value="decision">Decision</option>
@@ -65,14 +67,13 @@
           <option value="status">Status</option>
           <option value="ownershipPct">Ownership %</option>
           <option value="cashNeeded">Cash Needed</option>
-          <option value="name">Project Name</option>
         </select>
       </div>
       <div class="control">
         <label>Direction</label>
         <select id="sortDir" onchange="window.__suspendSort=false;render()">
+          <option value="asc" selected>Asc</option>
           <option value="desc">Desc</option>
-          <option value="asc">Asc</option>
         </select>
       </div>
       <div class="control">

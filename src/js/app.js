@@ -181,6 +181,7 @@ function getSortValue(p, field) {
   if (field === "ownershipPct") return Number(p.ownershipPct != null ? p.ownershipPct : -1);
   if (field === "cashNeeded") return p.cashNeeded ? 1 : 0;
   if (field === "name") return normalize(p.name);
+  if (field === "owner") return normalize(p.internalOwner);
   return "";
 }
 
@@ -307,8 +308,10 @@ function render() {
   var cardsEl = document.getElementById("cards");
   if (!cardsEl) return;
 
-  // Save scroll position before re-render
+  // Save scroll position AND which card is expanded before re-render
   var scrollY = window.scrollY || window.pageYOffset;
+  var expandedIds = {};
+  window._projects.forEach(function (p) { if (p.expanded) expandedIds[p.id] = true; });
 
   var projects = window._projects;
   var base = filterProjects(projects);
@@ -367,7 +370,6 @@ function render() {
       '</div>' +
 
       '<div class="toggleRow">' +
-        '<span class="toggleLink deleteLink" onclick="removeProject(\'' + p.id + '\')" title="Delete project">\u00d7 Delete</span>' +
         (((p.bucket || "pipeline") === "pipeline" && ((p.stage || 0) >= 4 || (p.status || "") === "Under Construction"))
           ? '<span class="toggleLink" onclick="moveToConstruction(\'' + p.id + '\')">Move to Construction</span>' : '') +
         '<span class="toggleLink" onclick="toggle(' + ri + ')">' + (p.expanded ? "Collapse" : "Expand") + '</span>' +
@@ -472,12 +474,27 @@ function render() {
         '</div>' +
 
         '<div class="smallNote">Weekly cadence: set Decision + Target Decision Date; use "Review filter" to drive meeting agenda.</div>' +
+
+        '<div class="dangerZone">' +
+          '<button class="btn-small btn-danger" onclick="removeProject(\'' + p.id + '\')">\u00d7 Delete This Project</button>' +
+        '</div>' +
       '</div>';
 
     cardsEl.appendChild(card);
   });
 
-  // Restore scroll position after re-render
+  // Restore expanded state + scroll position after re-render
+  window._projects.forEach(function (p) { p.expanded = !!expandedIds[p.id]; });
+
+  // Re-apply expanded class on cards to match state
+  var allCards = cardsEl.querySelectorAll(".card");
+  allCards.forEach(function (cardEl) {
+    var pid = cardEl.getAttribute("data-pid");
+    if (expandedIds[pid]) {
+      cardEl.classList.add("expanded");
+    }
+  });
+
   requestAnimationFrame(function () {
     window.scrollTo(0, scrollY);
   });

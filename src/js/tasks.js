@@ -50,24 +50,40 @@ function renderTaskPanel(project, ri) {
       ? '<button class="btn-small btn-complete" onclick="setTaskStatus(\'' + escAttr(projectId) + '\', \'' + escAttr(t.id) + '\', \'completed\')" title="Mark complete">\u2713 Complete</button>'
       : '<button class="btn-small btn-reopen" onclick="setTaskStatus(\'' + escAttr(projectId) + '\', \'' + escAttr(t.id) + '\', \'pending\')" title="Reopen task">\u21a9 Reopen</button>';
 
+    var notesHtml = t.notes
+      ? '<div class="taskNotes">' + escText(t.notes) + '</div>'
+      : '';
+
     taskRows +=
       '<li class="taskItem ' + statusClass + (isOverdue ? " overdue" : "") + '">' +
-        '<button class="taskStatusBadge ' + statusClass + '" ' +
-          'onclick="cycleTaskStatus(\'' + escAttr(projectId) + '\', \'' + escAttr(t.id) + '\', \'' + statusClass + '\')" ' +
-          'title="Click to change status">' +
-          (statusLabel[t.status] || t.status) +
-        '</button>' +
-        '<span class="taskTitle" title="' + escAttr(t.title) + '">' + escText(t.title) + '</span>' +
-        '<span class="taskAssignee">' + escText(t.assignee || "") + '</span>' +
-        '<span class="taskDue' + (isOverdue ? " overdue" : "") + '">' +
-          (t.dueDate || "\u2014") +
-        '</span>' +
-        '<span class="taskActions">' +
-          completeBtn +
-          '<button class="emailBtn" onclick="openEmail(buildTaskMailto(_findProject(\'' + escAttr(projectId) + '\'), window._taskCache[\'' + escAttr(projectId) + '\'][' + i + ']))" ' +
-            'title="Email assignee"' + (emailUrl ? "" : " disabled") + '>\u2709</button>' +
-          '<button class="deleteBtn" onclick="removeTask(\'' + escAttr(projectId) + '\', \'' + escAttr(t.id) + '\')" title="Delete task">\u00d7</button>' +
-        '</span>' +
+        '<div class="taskMainRow">' +
+          '<button class="taskStatusBadge ' + statusClass + '" ' +
+            'onclick="cycleTaskStatus(\'' + escAttr(projectId) + '\', \'' + escAttr(t.id) + '\', \'' + statusClass + '\')" ' +
+            'title="Click to change status">' +
+            (statusLabel[t.status] || t.status) +
+          '</button>' +
+          '<span class="taskTitle" title="' + escAttr(t.title) + '">' + escText(t.title) + '</span>' +
+          '<span class="taskAssignee">' + escText(t.assignee || "") + '</span>' +
+          '<span class="taskDue' + (isOverdue ? " overdue" : "") + '">' +
+            (t.dueDate || "\u2014") +
+          '</span>' +
+          '<span class="taskActions">' +
+            completeBtn +
+            '<button class="btn-small" onclick="toggleTaskNotes(\'' + escAttr(projectId) + '\', \'' + escAttr(t.id) + '\')" title="Edit notes">\u270e Notes</button>' +
+            '<button class="emailBtn" onclick="openEmail(buildTaskMailto(_findProject(\'' + escAttr(projectId) + '\'), window._taskCache[\'' + escAttr(projectId) + '\'][' + i + ']))" ' +
+              'title="Email assignee"' + (emailUrl ? "" : " disabled") + '>\u2709</button>' +
+            '<button class="deleteBtn" onclick="removeTask(\'' + escAttr(projectId) + '\', \'' + escAttr(t.id) + '\')" title="Delete task">\u00d7</button>' +
+          '</span>' +
+        '</div>' +
+        notesHtml +
+        '<div class="taskNotesEdit" id="taskNotesEdit-' + escAttr(t.id) + '" style="display:none">' +
+          '<textarea id="taskNotesArea-' + escAttr(t.id) + '" rows="2" placeholder="Add notes..." ' +
+            'style="width:100%;padding:8px 10px;border:1px solid rgba(0,0,0,.12);border-radius:10px;font-size:13px;resize:vertical;margin-top:6px">' + escText(t.notes || "") + '</textarea>' +
+          '<div style="display:flex;gap:6px;justify-content:flex-end;margin-top:6px">' +
+            '<button class="btn-small" onclick="toggleTaskNotes(\'' + escAttr(projectId) + '\', \'' + escAttr(t.id) + '\')">Cancel</button>' +
+            '<button class="btn-small btn-primary" onclick="saveTaskNotes(\'' + escAttr(projectId) + '\', \'' + escAttr(t.id) + '\')">Save Notes</button>' +
+          '</div>' +
+        '</div>' +
       '</li>';
   }
 
@@ -194,13 +210,16 @@ async function saveAndEmailTask(projectId, ri) {
   var data = _getTaskFormData(projectId);
   if (!data) return;
 
+  // Open email BEFORE the async save — desktop browsers block mailto:
+  // links triggered after an await (no longer a trusted user gesture)
+  var project = _findProject(projectId);
+  if (project) {
+    var mailto = buildTaskMailto(project, data);
+    openEmail(mailto);
+  }
+
   var result = await createTask(data);
   if (result) {
-    var project = _findProject(projectId);
-    if (project) {
-      var mailto = buildTaskMailto(project, result);
-      openEmail(mailto);
-    }
     await loadProjectTasks(projectId);
     render();
   }
@@ -241,6 +260,23 @@ async function setTaskStatus(projectId, taskId, newStatus) {
 async function removeTask(projectId, taskId) {
   if (!confirm("Delete this task?")) return;
   var result = await deleteTask(taskId);
+  if (result) {
+    await loadProjectTasks(projectId);
+    render();
+  }
+}
+
+function toggleTaskNotes(projectId, taskId) {
+  var el = document.getElementById("taskNotesEdit-" + taskId);
+  if (!el) return;
+  el.style.display = el.style.display === "none" ? "block" : "none";
+}
+
+async function saveTaskNotes(projectId, taskId) {
+  var area = document.getElementById("taskNotesArea-" + taskId);
+  if (!area) return;
+  var notes = area.value.trim();
+  var result = await updateTask(taskId, { notes: notes });
   if (result) {
     await loadProjectTasks(projectId);
     render();

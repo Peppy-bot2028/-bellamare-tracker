@@ -132,8 +132,11 @@ button:active { transform: translateY(1px) }
 .toggleRow { margin-top: 10px; display: flex; justify-content: flex-end; gap: 12px }
 .toggleLink { color: #6d5416; font-size: 12px; cursor: pointer; user-select: none }
 .toggleLink:hover { text-decoration: underline }
-.deleteLink { color: var(--muted) }
-.deleteLink:hover { color: var(--red); text-decoration: underline }
+.dangerZone {
+  margin-top: 18px; padding-top: 14px; border-top: 1px dashed rgba(239,68,68,.3);
+  display: flex; justify-content: flex-end;
+}
+.dangerZone .btn-danger { min-height: 44px; font-size: 13px; font-weight: 600 }
 
 .details { margin-top: 12px; border-top: 1px solid var(--border); padding-top: 12px; display: none }
 .card.expanded .details { display: block }
@@ -196,10 +199,12 @@ select, input[type=range], input[type=text], input[type=number], input[type=date
 .taskList { list-style: none; padding: 0; margin: 0 }
 
 .taskItem {
-  display: flex; align-items: center; gap: 8px; padding: 8px 10px;
+  display: flex; flex-direction: column; gap: 4px; padding: 8px 10px;
   border: 1px solid var(--border); border-radius: 10px; margin-bottom: 6px;
   background: #faf9f7; font-size: 13px;
 }
+.taskMainRow { display: flex; align-items: center; gap: 8px; width: 100% }
+.taskNotes { font-size: 12px; color: var(--muted); padding: 4px 0 2px 0; font-style: italic; word-break: break-word }
 .taskItem.completed { opacity: .55 }
 .taskItem.completed .taskTitle { text-decoration: line-through }
 .taskItem.overdue { border-color: rgba(239,68,68,.4) }
@@ -287,7 +292,7 @@ select, input[type=range], input[type=text], input[type=number], input[type=date
   button, select, input[type="text"], input[type="number"], input[type="date"], input[type="email"] {
     min-height: 44px; font-size: 14px;
   }
-  .taskItem { flex-wrap: wrap }
+  .taskMainRow { flex-wrap: wrap }
   .taskTitle { width: 100%; white-space: normal }
 }
 @media (max-width: 560px) {
