@@ -73,6 +73,7 @@ window._projects = [];
 window.__suspendSort = false;
 let _locked = false;
 const LOCK_CODE = "BELLAMARE";
+const DELETE_PIN = "1234";
 let nextIdCounter = 1;
 
 /* ---------- Utility Functions ---------- */
@@ -560,7 +561,10 @@ async function addProject() {
 }
 
 async function removeProject(id) {
-  if (!confirm("Are you sure you want to delete this project? This cannot be undone.")) return;
+  var pin = prompt("Enter the DELETE PIN to remove this project:");
+  if (pin === null) return; // cancelled
+  if (pin !== DELETE_PIN) { alert("Incorrect PIN. Project was NOT deleted."); return; }
+  if (!confirm("Are you sure? This cannot be undone.")) return;
   var result = await deleteProject(id);
   if (result === true) {
     window._projects = window._projects.filter(function (p) { return p.id !== id; });
