@@ -314,9 +314,11 @@ function render() {
   window._projects.forEach(function (p) { if (p.expanded) expandedIds[p.id] = true; });
 
   var projects = window._projects;
+  var searchQuery = (document.getElementById("searchBox") || {}).value || "";
   var base = filterProjects(projects);
   var filtered = applyReviewFilter(base);
-  var bucketFiltered = applyBucketFilter(filtered);
+  // Skip bucket filter when a search is active so results show from all views
+  var bucketFiltered = searchQuery.trim() ? filtered : applyBucketFilter(filtered);
   var visible = sortProjects(bucketFiltered);
 
   renderKPIs(bucketFiltered);
