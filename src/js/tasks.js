@@ -43,12 +43,10 @@ function renderTaskPanel(project, ri) {
     var t = tasks[i];
     var isOverdue = t.status !== "completed" && t.dueDate && t.dueDate < now;
     var statusClass = (t.status || "pending").replace(/ /g, "_");
-    var statusLabel = { pending: "Pending", in_progress: "In Progress", completed: "Done" };
+    var statusLabel = { pending: "Pending", in_progress: "In Progress" };
     var emailUrl = buildTaskMailto(project, t);
 
-    var completeBtn = t.status !== "completed"
-      ? '<button class="btn-small btn-complete" onclick="setTaskStatus(\'' + escAttr(projectId) + '\', \'' + escAttr(t.id) + '\', \'completed\')" title="Mark complete">\u2713 Complete</button>'
-      : '<button class="btn-small btn-reopen" onclick="setTaskStatus(\'' + escAttr(projectId) + '\', \'' + escAttr(t.id) + '\', \'pending\')" title="Reopen task">\u21a9 Reopen</button>';
+    // No separate complete button — status cycles via the badge (Pending → In Progress)
 
     var notesHtml = t.notes
       ? '<div class="taskNotes">' + escText(t.notes) + '</div>'
@@ -68,7 +66,6 @@ function renderTaskPanel(project, ri) {
             (t.dueDate || "\u2014") +
           '</span>' +
           '<span class="taskActions">' +
-            completeBtn +
             '<button class="btn-small" onclick="toggleTaskNotes(\'' + escAttr(projectId) + '\', \'' + escAttr(t.id) + '\')" title="Edit notes">\u270e Notes</button>' +
             '<button class="emailBtn" onclick="openEmail(buildTaskMailto(_findProject(\'' + escAttr(projectId) + '\'), window._taskCache[\'' + escAttr(projectId) + '\'][' + i + ']))" ' +
               'title="Email assignee"' + (emailUrl ? "" : " disabled") + '>\u2709</button>' +
@@ -226,7 +223,7 @@ async function saveAndEmailTask(projectId, ri) {
 }
 
 async function cycleTaskStatus(projectId, taskId, currentStatus) {
-  var nextStatus = { pending: "in_progress", in_progress: "completed", completed: "pending" };
+  var nextStatus = { pending: "in_progress", in_progress: "pending" };
   var newStatus = nextStatus[currentStatus] || "pending";
   var updates = { status: newStatus };
   if (newStatus === "completed") {
