@@ -146,3 +146,156 @@ function openEmail(url) {
   // Use window.location.href for mailto: — works on both mobile and desktop
   window.location.href = url;
 }
+
+/* ---------- Weekly Email All Tasks ---------- */
+
+// Group all active tasks by assignee email, return array of { name, email, tasks[] }
+function groupTasksByAssignee() {
+  var groups = {}; // keyed by email
+  var projects = window._projects || [];
+
+  for (var pid in (window._taskCache || {})) {
+    var tasks = window._taskCache[pid];
+    var project = null;
+    for (var p = 0; p < projects.length; p++) {
+      if (projects[p].id === pid) { project = projects[p]; break; }
+    }
+    if (!project) continue;
+
+    for (var t = 0; t < tasks.length; t++) {
+      var task = tasks[t];
+      if (task.status === "completed") continue; // skip done tasks
+      var email = task.assigneeEmail || ownerEmailLookup(task.assignee);
+      var name = (task.assignee || "").trim();
+      if (!email || !name) continue;
+
+      var key = email.toLowerCase();
+      if (!groups[key]) {
+        groups[key] = { name: name, email: email, tasks: [] };
+      }
+      groups[key].tasks.push({
+        projectName: project.name,
+        projectId: project.id,
+        title: task.title,
+        dueDate: task.dueDate || "No date set",
+        status: task.status || "pending",
+        notes: task.notes || ""
+      });
+    }
+  }
+
+  // Convert to sorted array
+  var result = [];
+  for (var k in groups) result.push(groups[k]);
+  result.sort(function (a, b) { return a.name.localeCompare(b.name); });
+  return result;
+}
+
+// Build a consolidated mailto for one assignee with all their tasks
+function buildWeeklyMailto(group) {
+  var lines = [];
+  lines.push("Hi " + group.name + ",");
+  lines.push("");
+  lines.push("Here is your weekly task summary from the Bellamare Development Tracker:");
+  lines.push("");
+
+  for (var i = 0; i < group.tasks.length; i++) {
+    var t = group.tasks[i];
+    var statusLabel = t.status === "in_progress" ? "In Progress" : "Pending";
+    lines.push((i + 1) + ". " + t.title);
+    lines.push("   Project: " + t.projectName + " (" + t.projectId + ")");
+    lines.push("   Due: " + t.dueDate + "  |  Status: " + statusLabel);
+    if (t.notes) lines.push("   Notes: " + t.notes);
+    lines.push("");
+  }
+
+  lines.push("Please update the tracker when tasks are complete.");
+  lines.push("");
+  lines.push("\u2014 Bellamare Development Tracker");
+
+  var subject = encodeURIComponent(
+    "Bellamare \u2013 Weekly Task Summary (" + group.tasks.length + " task" + (group.tasks.length === 1 ? "" : "s") + ")"
+  );
+  var body = encodeURIComponent(lines.join("\n"));
+  return "mailto:" + group.email + "?subject=" + subject + "&body=" + body;
+}
+
+// Show the weekly email review panel
+function showWeeklyEmailPanel() {
+  var groups = groupTasksByAssignee();
+  var panel = document.getElementById("weeklyEmailPanel");
+  if (!panel) return;
+
+  if (groups.length === 0) {
+    alert("No active tasks with assigned emails found.");
+    return;
+  }
+
+  var html = '<div class="weeklyEmailHeader">' +
+    '<h3>Weekly Task Emails</h3>' +
+    '<span style="color:var(--muted);font-size:13px">' + groups.length + ' team member' + (groups.length === 1 ? '' : 's') + '</span>' +
+    '<div style="display:flex;gap:8px;margin-left:auto">' +
+      '<button class="btn-small btn-primary" onclick="sendAllWeeklyEmails()">Send All</button>' +
+      '<button class="btn-small" onclick="hideWeeklyEmailPanel()">Close</button>' +
+    '</div>' +
+  '</div>';
+
+  for (var i = 0; i < groups.length; i++) {
+    var g = groups[i];
+    html += '<div class="weeklyEmailRow" id="weeklyRow-' + i + '">' +
+      '<div class="weeklyEmailPerson">' +
+        '<strong>' + escText(g.name) + '</strong>' +
+        '<span style="color:var(--muted);font-size:12px;margin-left:8px">' + escText(g.email) + '</span>' +
+        '<span class="badge" style="margin-left:8px">' + g.tasks.length + ' task' + (g.tasks.length === 1 ? '' : 's') + '</span>' +
+      '</div>' +
+      '<ul class="weeklyTaskList">';
+    for (var t = 0; t < g.tasks.length; t++) {
+      var task = g.tasks[t];
+      html += '<li>' + escText(task.title) + ' <span style="color:var(--muted);font-size:11px">(' + escText(task.projectName) + ' \u2013 due ' + escText(task.dueDate) + ')</span></li>';
+    }
+    html += '</ul>' +
+      '<button class="btn-small btn-email" onclick="sendWeeklyEmail(' + i + ')">Send Email</button>' +
+    '</div>';
+  }
+
+  panel.innerHTML = html;
+  panel.style.display = "block";
+  // Store groups for the send functions
+  window._weeklyEmailGroups = groups;
+}
+
+function hideWeeklyEmailPanel() {
+  var panel = document.getElementById("weeklyEmailPanel");
+  if (panel) { panel.style.display = "none"; panel.innerHTML = ""; }
+  window._weeklyEmailGroups = null;
+}
+
+function sendWeeklyEmail(index) {
+  var groups = window._weeklyEmailGroups;
+  if (!groups || !groups[index]) return;
+  var mailto = buildWeeklyMailto(groups[index]);
+  window.location.href = mailto;
+  // Mark row as sent
+  var row = document.getElementById("weeklyRow-" + index);
+  if (row) {
+    row.style.opacity = "0.5";
+    var btn = row.querySelector(".btn-email");
+    if (btn) { btn.textContent = "Sent"; btn.disabled = true; }
+  }
+}
+
+function sendAllWeeklyEmails() {
+  var groups = window._weeklyEmailGroups;
+  if (!groups || groups.length === 0) return;
+  // Send one at a time with delay so each mailto opens
+  var i = 0;
+  function sendNext() {
+    if (i >= groups.length) return;
+    sendWeeklyEmail(i);
+    i++;
+    if (i < groups.length) setTimeout(sendNext, 1500);
+  }
+  sendNext();
+}
+
+// escText is defined in app.js (loaded after this file)
