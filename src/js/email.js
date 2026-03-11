@@ -220,14 +220,30 @@ function buildWeeklyMailto(group) {
   return "mailto:" + group.email + "?subject=" + subject + "&body=" + body;
 }
 
-// Show the weekly email review panel
-function showWeeklyEmailPanel() {
-  var groups = groupTasksByAssignee();
+// Load all tasks for every project into the cache, then show the panel
+async function showWeeklyEmailPanel() {
   var panel = document.getElementById("weeklyEmailPanel");
   if (!panel) return;
 
+  // Load tasks for all projects that haven't been loaded yet
+  var projects = window._projects || [];
+  var toLoad = [];
+  for (var i = 0; i < projects.length; i++) {
+    if (projects[i].id && !window._taskCache[projects[i].id]) {
+      toLoad.push(projects[i].id);
+    }
+  }
+  if (toLoad.length > 0) {
+    panel.innerHTML = '<div style="padding:16px;color:var(--muted)">Loading all tasks...</div>';
+    panel.style.display = "block";
+    await Promise.all(toLoad.map(function (pid) { return loadProjectTasks(pid); }));
+  }
+
+  var groups = groupTasksByAssignee();
+
   if (groups.length === 0) {
     alert("No active tasks with assigned emails found.");
+    panel.style.display = "none";
     return;
   }
 
