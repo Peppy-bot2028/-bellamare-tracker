@@ -222,30 +222,52 @@ function buildWeeklyMailto(group) {
 
 // Load all tasks for every project into the cache, then show the panel
 async function showWeeklyEmailPanel() {
-  var panel = document.getElementById("weeklyEmailPanel");
-  if (!panel) return;
+  try {
+    var panel = document.getElementById("weeklyEmailPanel");
+    if (!panel) { alert("Panel element not found"); return; }
 
-  // Load tasks for all projects that haven't been loaded yet
-  var projects = window._projects || [];
-  var toLoad = [];
-  for (var i = 0; i < projects.length; i++) {
-    if (projects[i].id && !window._taskCache[projects[i].id]) {
-      toLoad.push(projects[i].id);
-    }
-  }
-  if (toLoad.length > 0) {
-    panel.innerHTML = '<div style="padding:16px;color:var(--muted)">Loading all tasks...</div>';
+    var projects = window._projects || [];
+    if (projects.length === 0) { alert("No projects loaded yet. Please wait for the app to finish loading."); return; }
+
+    // Load tasks for ALL projects
+    panel.innerHTML = '<div style="padding:16px;color:var(--muted)">Loading tasks for ' + projects.length + ' projects...</div>';
     panel.style.display = "block";
-    await Promise.all(toLoad.map(function (pid) { return loadProjectTasks(pid); }));
-  }
 
-  var groups = groupTasksByAssignee();
+    var loadPromises = [];
+    for (var i = 0; i < projects.length; i++) {
+      if (projects[i].id) {
+        loadPromises.push(loadProjectTasks(projects[i].id));
+      }
+    }
+    await Promise.all(loadPromises);
 
-  if (groups.length === 0) {
-    alert("No active tasks with assigned emails found.");
-    panel.style.display = "none";
-    return;
-  }
+    // Count total tasks loaded
+    var totalTasks = 0;
+    var tasksWithEmail = 0;
+    var tasksNoEmail = 0;
+    for (var pid in window._taskCache) {
+      var cached = window._taskCache[pid];
+      for (var ti = 0; ti < cached.length; ti++) {
+        if (cached[ti].status === "completed") continue;
+        totalTasks++;
+        var tEmail = cached[ti].assigneeEmail || ownerEmailLookup(cached[ti].assignee);
+        if (tEmail) tasksWithEmail++;
+        else tasksNoEmail++;
+      }
+    }
+
+    var groups = groupTasksByAssignee();
+
+    if (groups.length === 0) {
+      var msg = "No emails to send.\n\n" +
+        "Active tasks found: " + totalTasks + "\n" +
+        "Tasks with email: " + tasksWithEmail + "\n" +
+        "Tasks missing email: " + tasksNoEmail + "\n\n" +
+        "Make sure tasks have an assignee with an email address.";
+      alert(msg);
+      panel.style.display = "none";
+      return;
+    }
 
   var html = '<div class="weeklyEmailHeader">' +
     '<h3>Weekly Task Emails</h3>' +
@@ -278,6 +300,10 @@ async function showWeeklyEmailPanel() {
   panel.style.display = "block";
   // Store groups for the send functions
   window._weeklyEmailGroups = groups;
+  } catch (err) {
+    alert("Error loading weekly emails: " + err.message);
+    console.error("showWeeklyEmailPanel error:", err);
+  }
 }
 
 function hideWeeklyEmailPanel() {
