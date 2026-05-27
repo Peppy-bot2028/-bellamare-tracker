@@ -370,6 +370,11 @@ function render() {
         '<span class="scorePill ' + scoreClass(avg) + '">' + avg + '</span>' +
       '</div>' +
 
+      '<div class="miniBadges">' +
+        '<span class="badge badge-gold">' + (stages[p.stage] || "—") + '</span>' +
+        decisionChip +
+      '</div>' +
+
       '<div class="badges">' +
         '<span class="badge badge-gold">' + (stages[p.stage] || "\u2014") + '</span>' +
         '<span class="badge badge-wax">' + (p.status || "\u2014") + '</span>' +

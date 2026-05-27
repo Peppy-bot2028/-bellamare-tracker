@@ -169,6 +169,13 @@ button:active { transform: translateY(1px) }
 .details { margin-top: 12px; border-top: 1px solid var(--border); padding-top: 12px; display: none }
 .card.expanded .details { display: block }
 
+/* Minimal collapsed card — show only Stage + Decision; full detail appears when expanded */
+.miniBadges { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0 0 }
+.card .badges, .card .minGrid { display: none }
+.card.expanded .badges { display: flex }
+.card.expanded .minGrid { display: grid }
+.card.expanded .miniBadges { display: none }
+
 .field { margin-bottom: 10px }
 .field .label { font-size: 10px; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); margin-bottom: 4px }
 
