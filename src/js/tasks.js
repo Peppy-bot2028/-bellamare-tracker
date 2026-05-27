@@ -142,15 +142,16 @@ function renderTaskPanel(project, ri) {
         '<h3>Action Items (' + activeTasks.length + ')</h3>' +
         '<button class="btn-small btn-primary" onclick="showAddTaskForm(\'' + escAttr(projectId) + '\', ' + ri + ')">+ Add Task</button>' +
       '</div>' +
-      (activeTasks.length > 0
-        ? '<ul class="taskList">' + taskRows + '</ul>'
-        : '<div style="font-size:12px;color:var(--muted);padding:8px 0">No active tasks. Add one after your monthly meeting.</div>') +
-      historySection +
       '<div id="addTaskForm-' + escAttr(projectId) + '" style="display:none">' +
         '<div class="addTaskForm">' +
           '<div class="field">' +
             '<div class="label">Task Title</div>' +
             '<input type="text" id="taskTitle-' + escAttr(projectId) + '" placeholder="e.g., Submit rezoning application" />' +
+          '</div>' +
+          '<div class="field">' +
+            '<div class="label">Description</div>' +
+            '<textarea id="taskNotes-' + escAttr(projectId) + '" rows="2" placeholder="What needs to be done and why…" ' +
+              'style="width:100%;padding:9px 10px;border:1px solid rgba(0,0,0,.12);border-radius:10px;font-size:13px;resize:vertical"></textarea>' +
           '</div>' +
           '<div class="twoCol">' +
             '<div class="field">' +
@@ -168,11 +169,6 @@ function renderTaskPanel(project, ri) {
               '<input type="date" id="taskDue-' + escAttr(projectId) + '" />' +
             '</div>' +
           '</div>' +
-          '<div class="field">' +
-            '<div class="label">Notes</div>' +
-            '<textarea id="taskNotes-' + escAttr(projectId) + '" rows="2" placeholder="Optional notes..." ' +
-              'style="width:100%;padding:9px 10px;border:1px solid rgba(0,0,0,.12);border-radius:10px;font-size:13px;resize:vertical"></textarea>' +
-          '</div>' +
           '<div class="formActions">' +
             '<button class="btn-small" onclick="hideAddTaskForm(\'' + escAttr(projectId) + '\')">Cancel</button>' +
             '<button class="btn-small btn-email" onclick="saveAndEmailTask(\'' + escAttr(projectId) + '\', ' + ri + ')">Save & Email</button>' +
@@ -180,6 +176,10 @@ function renderTaskPanel(project, ri) {
           '</div>' +
         '</div>' +
       '</div>' +
+      (activeTasks.length > 0
+        ? '<ul class="taskList">' + taskRows + '</ul>'
+        : '<div style="font-size:12px;color:var(--muted);padding:8px 0">No active tasks. Add one after your monthly meeting.</div>') +
+      historySection +
     '</div>'
   );
 }
@@ -228,6 +228,11 @@ function _getTaskFormData(projectId) {
 
   if (!title.trim()) {
     alert("Please enter a task title.");
+    return null;
+  }
+
+  if (!notes.trim()) {
+    alert("Please enter a description so everyone can see what the task is.");
     return null;
   }
 

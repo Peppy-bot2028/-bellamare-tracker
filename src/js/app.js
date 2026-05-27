@@ -233,9 +233,10 @@ function filterProjects(list) {
 }
 
 function applyReviewFilter(list) {
-  var mode = (document.getElementById("reviewFilter") || {}).value || "all";
+  var mode = (document.getElementById("reviewFilter") || {}).value || "active";
   var now = todayISO();
   if (mode === "all") return list;
+  if (mode === "active") return list.filter(function (p) { return p.decision !== "Hold" && p.decision !== "Kill"; });
   if (mode === "cash") return list.filter(function (p) { return !!p.cashNeeded; });
   if (mode === "holdkill") return list.filter(function (p) { return p.decision === "Hold" || p.decision === "Kill"; });
   if (mode === "overdue") return list.filter(function (p) {
@@ -368,6 +369,11 @@ function render() {
         '<button class="emailBtn" onclick="openEmail(buildProjectMailto(window._projects[' + ri + ']))" title="Email owner"' +
           (emailUrl ? '' : ' disabled') + '>\u2709</button>' +
         '<span class="scorePill ' + scoreClass(avg) + '">' + avg + '</span>' +
+      '</div>' +
+
+      '<div class="miniBadges">' +
+        '<span class="badge badge-gold">' + (stages[p.stage] || "—") + '</span>' +
+        decisionChip +
       '</div>' +
 
       '<div class="badges">' +
