@@ -101,6 +101,47 @@ function scoreClass(v) {
   return "score-red";
 }
 
+// Parse a free-text cash amount ("200K", "$5M", "$24,000,000", "2-3M") into a number.
+// For a range (e.g. "2-3M") the higher end is used. Returns 0 if unparseable.
+function parseAmount(raw) {
+  if (!raw) return 0;
+  var s = String(raw).toLowerCase().replace(/[$,\s]/g, "").replace(/[–—]/g, "-").replace(/to/g, "-");
+  if (!s) return 0;
+
+  function one(t) {
+    var m = t.match(/(\d*\.?\d+)\s*(k|thousand|mm|mil|million|m|billion|b)?/);
+    if (!m) return 0;
+    var n = parseFloat(m[1]);
+    if (!Number.isFinite(n)) return 0;
+    var unit = m[2] || "";
+    if (unit === "k" || unit === "thousand") n *= 1e3;
+    else if (unit === "b" || unit === "billion") n *= 1e9;
+    else if (unit) n *= 1e6; // m, mm, mil, million
+    return n;
+  }
+
+  var parts = s.split("-").filter(Boolean);
+  if (parts.length >= 2) {
+    // Range: if only the last part carries the unit (e.g. "2-3m"), borrow it for the first
+    var unitMatch = parts[parts.length - 1].match(/(k|thousand|mm|mil|million|m|billion|b)$/);
+    var vals = parts.map(function (pt) {
+      if (unitMatch && !/[a-z]$/.test(pt)) pt += unitMatch[1];
+      return one(pt);
+    });
+    return Math.max.apply(null, vals); // use the higher end of a range
+  }
+  return one(s);
+}
+
+// Format a number as compact currency: $25.5M, $800K, $100
+function fmtMoney(n) {
+  if (!n || n <= 0) return "$0";
+  if (n >= 1e9) return "$" + (n / 1e9).toFixed(n % 1e9 === 0 ? 0 : 1) + "B";
+  if (n >= 1e6) return "$" + (n / 1e6).toFixed(n % 1e6 === 0 ? 0 : 1) + "M";
+  if (n >= 1e3) return "$" + Math.round(n / 1e3) + "K";
+  return "$" + Math.round(n);
+}
+
 function todayISO() {
   var d = new Date();
   var y = d.getFullYear();
@@ -278,9 +319,19 @@ function renderKPIs(allProjects) {
 
   var taskCounts = countOpenTasks();
 
+  // Total capital to raise = sum of cash-needed amounts across ALL Advance projects (portfolio-wide)
+  var advanceProjects = (window._projects || []).filter(function (p) { return p.decision === "Advance"; });
+  var capitalToRaise = advanceProjects.reduce(function (sum, p) { return sum + parseAmount(p.cashNeededAmount); }, 0);
+  var capitalCount = advanceProjects.filter(function (p) { return parseAmount(p.cashNeededAmount) > 0; }).length;
+
   var el = document.getElementById("kpis");
   if (!el) return;
   el.innerHTML =
+    '<div class="kpi kpi-capital">' +
+      '<div class="kpiLabel">Total Capital to Raise</div>' +
+      '<div class="kpiValue">' + fmtMoney(capitalToRaise) + '</div>' +
+      '<div class="kpiSub">Across ' + capitalCount + ' Advance project' + (capitalCount === 1 ? '' : 's') + '</div>' +
+    '</div>' +
     '<div class="kpi">' +
       '<div class="kpiLabel">Projects</div>' +
       '<div class="kpiValue">' + allProjects.length + '</div>' +

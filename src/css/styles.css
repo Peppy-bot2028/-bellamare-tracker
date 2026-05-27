@@ -102,6 +102,10 @@ button:active { transform: translateY(1px) }
   box-shadow: 0 8px 20px rgba(0,0,0,.06);
   padding: 12px 12px 10px;
 }
+.kpi-capital { border-color: rgba(201,162,77,.6); background: linear-gradient(180deg, #fffdf7, #fbf4e6) }
+.kpi-capital .kpiLabel { color: #6d5416 }
+.kpi-capital .kpiValue { color: var(--wax) }
+
 .kpiLabel { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px }
 .kpiValue { margin-top: 6px; font-size: 18px; font-weight: 900 }
 .kpiSub { margin-top: 2px; font-size: 11px; color: var(--muted) }
