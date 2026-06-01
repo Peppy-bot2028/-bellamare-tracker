@@ -315,6 +315,17 @@ function normalizeProject(p) {
     internalOwner: p.internalOwner || "",
     internalOwnerEmail: p.internalOwnerEmail || "",
     bucket: ((p.bucket || p.Bucket || "pipeline") === "development" ? "construction" : (p.bucket || p.Bucket || "pipeline")),
+    fin: (function () {
+      var f = p.fin || {};
+      return {
+        tpc: f.tpc || "",
+        softCost: f.softCost || "",
+        softCostCash: f.softCostCash || "",
+        sources: Array.isArray(f.sources) ? f.sources.map(function (s) {
+          return { label: (s && s.label) || "", type: (s && s.type) || "Debt", amount: (s && s.amount) || "" };
+        }) : []
+      };
+    })(),
     scores: (function () {
       var raw = p.scores || {};
       function get(k, alt) {

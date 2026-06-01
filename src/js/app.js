@@ -173,6 +173,228 @@ function updateScorePill(pid, ri) {
   }
 }
 
+/* ---------- Capital / Financials ---------- */
+
+function _emptyFin() {
+  return { tpc: "", softCost: "", softCostCash: "", sources: [] };
+}
+
+// Per-project capital rollup (parsed numbers)
+function projCapital(p) {
+  var f = (p && p.fin) || {};
+  var debt = 0, equity = 0;
+  (f.sources || []).forEach(function (s) {
+    var a = parseAmount(s && s.amount);
+    if ((s && s.type ? String(s.type) : "").toLowerCase() === "equity") equity += a;
+    else debt += a;
+  });
+  var tpc = parseAmount(f.tpc);
+  return {
+    tpc: tpc,
+    soft: parseAmount(f.softCost),
+    softCash: parseAmount(f.softCostCash),
+    debt: debt,
+    equity: equity,
+    stack: debt + equity,
+    gap: tpc - (debt + equity)
+  };
+}
+
+// Projects counted in the top-of-page totals: everything live (exclude Archive + Kill)
+function capitalScope() {
+  return (window._projects || []).filter(function (p) {
+    return (p.bucket || "pipeline") !== "archived" && p.decision !== "Kill";
+  });
+}
+
+function computeCapitalTotals(list) {
+  var t = { tpc: 0, soft: 0, softCash: 0, debt: 0, equity: 0, count: 0 };
+  (list || []).forEach(function (p) {
+    var c = projCapital(p);
+    t.tpc += c.tpc; t.soft += c.soft; t.softCash += c.softCash;
+    t.debt += c.debt; t.equity += c.equity;
+    if (c.tpc || c.stack || c.soft || c.softCash) t.count += 1;
+  });
+  return t;
+}
+
+function renderCapStrip(list) {
+  var el = document.getElementById("capStrip");
+  if (!el) return;
+  var t = computeCapitalTotals(list);
+  var stack = t.debt + t.equity;
+  var gap = t.tpc - stack;
+  var gapTxt, gapCls;
+  if (!t.tpc) { gapTxt = "Add Total Project Cost on each deal to track funding coverage"; gapCls = ""; }
+  else if (Math.abs(gap) < 1) { gapTxt = "Capital sources fully cover total project cost"; gapCls = "finOk"; }
+  else if (gap > 0) { gapTxt = fmtMoney(gap) + " still to be sourced (sources " + fmtMoney(stack) + " of " + fmtMoney(t.tpc) + ")"; gapCls = "finGap"; }
+  else { gapTxt = fmtMoney(-gap) + " over-capitalized (sources " + fmtMoney(stack) + " vs " + fmtMoney(t.tpc) + ")"; gapCls = "finOver"; }
+
+  var sub = "Across " + t.count + " project" + (t.count === 1 ? "" : "s");
+
+  el.innerHTML =
+    '<div class="kpis">' +
+      '<div class="kpi kpi-tpc">' +
+        '<div class="kpiLabel">Total Project Cost</div>' +
+        '<div class="kpiValue">' + fmtMoney(t.tpc) + '</div>' +
+        '<div class="kpiSub">' + sub + '</div>' +
+      '</div>' +
+      '<div class="kpi">' +
+        '<div class="kpiLabel">Soft Cost Budget</div>' +
+        '<div class="kpiValue">' + fmtMoney(t.soft) + '</div>' +
+        '<div class="kpiSub">Total soft costs</div>' +
+      '</div>' +
+      '<div class="kpi kpi-cash">' +
+        '<div class="kpiLabel">Cash Needed \u2014 Soft Costs</div>' +
+        '<div class="kpiValue">' + fmtMoney(t.softCash) + '</div>' +
+        '<div class="kpiSub">Near-term cash</div>' +
+      '</div>' +
+      '<div class="kpi">' +
+        '<div class="kpiLabel">Total Debt</div>' +
+        '<div class="kpiValue">' + fmtMoney(t.debt) + '</div>' +
+        '<div class="kpiSub">Loans / TIF / other</div>' +
+      '</div>' +
+      '<div class="kpi kpi-capital">' +
+        '<div class="kpiLabel">Equity to Raise</div>' +
+        '<div class="kpiValue">' + fmtMoney(t.equity) + '</div>' +
+        '<div class="kpiSub">LP / QOZ / GP</div>' +
+      '</div>' +
+    '</div>' +
+    '<div class="capNote">' + (gapCls ? '<span class="' + gapCls + '">' + gapTxt + '</span>' : gapTxt) + '</div>';
+}
+
+function updateCapStrip() {
+  renderCapStrip(capitalScope());
+}
+
+// Compact capital line shown on every card (collapsed + expanded)
+function renderCapLine(p) {
+  var c = projCapital(p);
+  if (!(c.tpc || c.debt || c.equity || c.soft || c.softCash)) return "";
+  var parts = [];
+  if (c.tpc) parts.push('<span><b>TPC</b> ' + fmtMoney(c.tpc) + '</span>');
+  if (c.debt) parts.push('<span><b>Debt</b> ' + fmtMoney(c.debt) + '</span>');
+  if (c.equity) parts.push('<span><b>Equity</b> ' + fmtMoney(c.equity) + '</span>');
+  if (c.softCash) parts.push('<span><b>Soft-cost cash</b> ' + fmtMoney(c.softCash) + '</span>');
+  return '<div class="capLine">' + parts.join("") + '</div>';
+}
+
+function _finReconText(p) {
+  var c = projCapital(p);
+  if (!c.tpc && !c.stack) return "Enter Total Project Cost and capital sources to see the funding check.";
+  var gap = c.gap;
+  var cls = Math.abs(gap) < 1 ? "finOk" : (gap > 0 ? "finGap" : "finOver");
+  var label = Math.abs(gap) < 1
+    ? "Fully capitalized"
+    : (gap > 0 ? fmtMoney(gap) + " left to source" : fmtMoney(-gap) + " over-capitalized");
+  return "Sources " + fmtMoney(c.stack) + " vs TPC " + fmtMoney(c.tpc) +
+    ' \u2014 <span class="' + cls + '">' + label + "</span>";
+}
+
+function updateFinRecon(ri) {
+  var p = window._projects[ri];
+  if (!p) return;
+  var el = document.querySelector('.finRecon[data-pid="' + escAttr(p.id) + '"]');
+  if (el) el.innerHTML = _finReconText(p);
+}
+
+function setFin(ri, key, val) {
+  var p = window._projects[ri];
+  if (!p) return;
+  if (!p.fin) p.fin = _emptyFin();
+  p.fin[key] = val;
+  updateCapStrip();
+  updateFinRecon(ri);
+  debouncedSave(p);
+}
+
+function addFinSource(ri) {
+  var p = window._projects[ri];
+  if (!p) return;
+  if (!p.fin) p.fin = _emptyFin();
+  if (!p.fin.sources) p.fin.sources = [];
+  p.fin.sources.push({ label: "", type: "Debt", amount: "" });
+  debouncedSave(p);
+  render();
+}
+
+function removeFinSource(ri, idx) {
+  var p = window._projects[ri];
+  if (!p || !p.fin || !p.fin.sources) return;
+  p.fin.sources.splice(idx, 1);
+  debouncedSave(p);
+  render();
+}
+
+function updateFinSource(ri, idx, key, val) {
+  var p = window._projects[ri];
+  if (!p || !p.fin || !p.fin.sources || !p.fin.sources[idx]) return;
+  p.fin.sources[idx][key] = val;
+  updateCapStrip();
+  updateFinRecon(ri);
+  debouncedSave(p);
+}
+
+function _finField(label, val, ri, key, ph) {
+  return '<div class="field"><div class="label">' + label + '</div>' +
+    '<input type="text" value="' + escAttr(val || "") + '" placeholder="' + ph + '" ' +
+    'oninput="setFin(' + ri + ',\'' + key + '\',this.value)"/></div>';
+}
+
+function renderCapitalSection(p, ri) {
+  var f = p.fin || {};
+  var sources = f.sources || [];
+  var sourcesHtml = "";
+  if (sources.length === 0) {
+    sourcesHtml = '<div style="font-size:12px;color:var(--muted);padding:4px 0 8px">No capital sources yet. Add the loan, TIF, LP/QOZ equity, etc.</div>';
+  } else {
+    for (var i = 0; i < sources.length; i++) {
+      var s = sources[i];
+      var isEq = (s.type ? String(s.type) : "").toLowerCase() === "equity";
+      sourcesHtml +=
+        '<div class="finSourceRow">' +
+          '<input type="text" class="finSrcLabel" value="' + escAttr(s.label || "") + '" placeholder="Source (e.g. Senior Loan, TIF, LP Equity, QOZ Equity)" ' +
+            'oninput="updateFinSource(' + ri + ',' + i + ',\'label\',this.value)"/>' +
+          '<select class="finSrcType" onchange="updateFinSource(' + ri + ',' + i + ',\'type\',this.value)">' +
+            '<option' + (!isEq ? ' selected' : '') + '>Debt</option>' +
+            '<option' + (isEq ? ' selected' : '') + '>Equity</option>' +
+          '</select>' +
+          '<input type="text" class="finSrcAmt" value="' + escAttr(s.amount || "") + '" placeholder="$ amount" ' +
+            'oninput="updateFinSource(' + ri + ',' + i + ',\'amount\',this.value)"/>' +
+          '<button class="deleteBtn" title="Remove source" onclick="removeFinSource(' + ri + ',' + i + ')">\u00d7</button>' +
+        '</div>';
+    }
+  }
+
+  return (
+    '<div class="capSection">' +
+      '<div class="capSectionHead">Capital Structure</div>' +
+      '<div class="threeCol">' +
+        _finField("Total Project Cost", f.tpc, ri, "tpc", "$6.1M") +
+        _finField("Soft Cost Budget", f.softCost, ri, "softCost", "$150K") +
+        _finField("Cash Needed (Soft Costs)", f.softCostCash, ri, "softCostCash", "$50K") +
+      '</div>' +
+      '<div class="finSources">' +
+        '<div class="finSourcesHead">' +
+          '<span class="label" style="margin:0">Capital Sources</span>' +
+          '<button class="btn-small btn-primary" onclick="addFinSource(' + ri + ')">+ Add Source</button>' +
+        '</div>' +
+        sourcesHtml +
+      '</div>' +
+      '<div class="finRecon" data-pid="' + escAttr(p.id) + '">' + _finReconText(p) + '</div>' +
+    '</div>'
+  );
+}
+
+// Visible (filtered) project set — shared by render() and live updates
+function getVisibleProjects() {
+  var projects = window._projects;
+  var searchQuery = (document.getElementById("searchBox") || {}).value || "";
+  var base = filterProjects(projects);
+  var filtered = applyReviewFilter(base);
+  return searchQuery.trim() ? filtered : applyBucketFilter(filtered);
+}
+
 /* ---------- ID Generation ---------- */
 
 function _newId() {
@@ -319,19 +541,9 @@ function renderKPIs(allProjects) {
 
   var taskCounts = countOpenTasks();
 
-  // Total capital to raise = sum of cash-needed amounts across ALL Advance projects (portfolio-wide)
-  var advanceProjects = (window._projects || []).filter(function (p) { return p.decision === "Advance"; });
-  var capitalToRaise = advanceProjects.reduce(function (sum, p) { return sum + parseAmount(p.cashNeededAmount); }, 0);
-  var capitalCount = advanceProjects.filter(function (p) { return parseAmount(p.cashNeededAmount) > 0; }).length;
-
   var el = document.getElementById("kpis");
   if (!el) return;
   el.innerHTML =
-    '<div class="kpi kpi-capital">' +
-      '<div class="kpiLabel">Total Capital to Raise</div>' +
-      '<div class="kpiValue">' + fmtMoney(capitalToRaise) + '</div>' +
-      '<div class="kpiSub">Across ' + capitalCount + ' Advance project' + (capitalCount === 1 ? '' : 's') + '</div>' +
-    '</div>' +
     '<div class="kpi">' +
       '<div class="kpiLabel">Projects</div>' +
       '<div class="kpiValue">' + allProjects.length + '</div>' +
@@ -381,14 +593,11 @@ function render() {
   window._projects.forEach(function (p) { if (p.expanded) expandedIds[p.id] = true; });
 
   var projects = window._projects;
-  var searchQuery = (document.getElementById("searchBox") || {}).value || "";
-  var base = filterProjects(projects);
-  var filtered = applyReviewFilter(base);
-  // Skip bucket filter when a search is active so results show from all views
-  var bucketFiltered = searchQuery.trim() ? filtered : applyBucketFilter(filtered);
+  var bucketFiltered = getVisibleProjects();
   var visible = sortProjects(bucketFiltered);
 
   renderKPIs(bucketFiltered);
+  renderCapStrip(capitalScope());
 
   cardsEl.innerHTML = "";
   visible.forEach(function (p) {
@@ -426,6 +635,8 @@ function render() {
         '<span class="badge badge-gold">' + (stages[p.stage] || "—") + '</span>' +
         decisionChip +
       '</div>' +
+
+      renderCapLine(p) +
 
       '<div class="badges">' +
         '<span class="badge badge-gold">' + (stages[p.stage] || "\u2014") + '</span>' +
@@ -533,6 +744,8 @@ function render() {
               'style="width:100%;resize:vertical;padding:10px;border:1px solid rgba(0,0,0,.12);border-radius:10px">' + escText(p.generalComments || "") + '</textarea></div>' +
         '</div>' +
 
+        renderCapitalSection(p, ri) +
+
         renderTaskPanel(p, ri) +
 
         '<div class="scores">' +
@@ -630,6 +843,7 @@ async function addProject() {
     internalOwnerEmail: "",
     bucket: "pipeline",
     expanded: true,
+    fin: { tpc: "", softCost: "", softCostCash: "", sources: [] },
     scores: { Market: 0, Entitlements: 0, Site: 0, Construction: 0, Capital: 0, Sponsor: 0 }
   };
 
