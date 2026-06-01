@@ -376,3 +376,54 @@ select, input[type=range], input[type=text], input[type=number], input[type=date
 @media (max-width: 720px) {
   .weeklyEmailPerson { flex-direction: column; align-items: flex-start; gap: 4px }
 }
+
+/* ===== Capital Summary Strip (top of page) ===== */
+.capWrap { margin: 14px 0 4px }
+.kpi-tpc { border-color: rgba(123,15,29,.45); background: linear-gradient(180deg,#fffdfd,#fbf0f1) }
+.kpi-tpc .kpiLabel { color: #7b0f1d }
+.kpi-tpc .kpiValue { color: var(--wax) }
+.kpi-cash { border-color: rgba(239,68,68,.45); background: linear-gradient(180deg,#fffdfc,#fdf0ef) }
+.kpi-cash .kpiLabel { color: #8b1a1a }
+.kpi-cash .kpiValue { color: #b91c1c }
+.capNote { font-size: 12px; color: var(--muted); margin-top: 8px; text-align: right }
+.capNote .finOk { color: #14532d; font-weight: 700 }
+.capNote .finGap { color: #8b1a1a; font-weight: 700 }
+.capNote .finOver { color: #6d5416; font-weight: 700 }
+
+/* ===== Card capital line ===== */
+.capLine {
+  display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 8px 0 0;
+  font-size: 12px; color: #6d5416;
+}
+.capLine span { white-space: nowrap }
+.capLine b { color: var(--wax); font-weight: 800; font-size: 11px; letter-spacing: .3px }
+
+/* ===== Capital Structure (expanded card) ===== */
+.capSection {
+  margin-top: 12px; padding: 12px; border: 1px solid rgba(201,162,77,.45);
+  border-radius: 12px; background: #fffdf8;
+}
+.capSectionHead {
+  font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .5px;
+  color: var(--wax); margin-bottom: 10px; padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+}
+.finSources { margin-top: 10px }
+.finSourcesHead { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px }
+.finSourceRow { display: flex; gap: 8px; margin-bottom: 6px; align-items: center; flex-wrap: wrap }
+.finSourceRow input, .finSourceRow select { width: 100% }
+.finSrcLabel { flex: 1 1 160px; min-width: 140px }
+.finSrcType { flex: 0 0 112px }
+.finSrcAmt { flex: 0 0 120px }
+.finSourceRow .deleteBtn { flex: 0 0 auto }
+.finRecon {
+  margin-top: 8px; padding: 8px 10px; font-size: 12px; color: var(--muted);
+  background: #faf9f7; border: 1px dashed rgba(0,0,0,.12); border-radius: 10px;
+}
+.finRecon .finOk { color: #14532d; font-weight: 700 }
+.finRecon .finGap { color: #8b1a1a; font-weight: 700 }
+.finRecon .finOver { color: #6d5416; font-weight: 700 }
+@media (max-width: 560px) {
+  .finSrcType, .finSrcAmt { flex: 1 1 45% }
+  .capNote { text-align: left }
+}
